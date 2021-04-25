@@ -666,10 +666,10 @@ export default function Profile(props) {
                             <Box>{postsCount.data}</Box>
                             <Box>posts</Box>
                           </Box>
-                          <Box>
+                          {/* <Box>
                             <Box>79</Box>
                             <Box>comunities</Box>
-                          </Box>
+                          </Box> */}
                         </Box>
                       </Paper>
                     </Box>
