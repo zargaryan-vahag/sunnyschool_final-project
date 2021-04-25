@@ -1,10 +1,10 @@
 const mongoose = require('mongoose');
-const userStatusManager = require('../managers/user-status-manager.js');
+const userStatusManager = require('../managers/user-status-manager');
 const Schema = mongoose.Schema;
 const { ObjectId } = Schema.Types;
 
 const friendSchema = new Schema({ 
-  userId: { type: ObjectId, ref: 'User', unique: true },
+  userId: { type: ObjectId, ref: 'User' },
   createdAt: { type: Date, default: Date.now }
 }, { 
   versionKey: false,
@@ -16,16 +16,22 @@ const UserSchema = new Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true, select: false },
   status: { type: Number, default: userStatusManager.default },
-  isverified: { type: Boolean, default: false },
+  isverified: { type: Boolean, default: true },
   token: { type: String, select: false },
   avatar: { type: String, default: 'default_avatar.png' },
   firstname: { type: String, required: true },
   lastname: { type: String, required: true },
-  birthday: { type: Date, default: null },
-  showBirthday: { type: Number, default: 0 },
-  hometown: { type: String, default: '' },
-  gender: { type: Number, default: 0 },
-  friends: { type: [friendSchema], select: false }
+  friends: { type: [friendSchema], select: false },
+  // options: {
+  //   birthday: { type: Number, default: 0 },
+  //   hometown: { type: Number, default: 0 },
+  //   gender: { type: Number, default: 0 }
+  // },
+  info: {
+    birthday: { type: Date, default: null },
+    hometown: { type: String, default: null },
+    gender: { type: Number, default: 0 }
+  }
 }, {
   versionKey: false,
   timestamps: true

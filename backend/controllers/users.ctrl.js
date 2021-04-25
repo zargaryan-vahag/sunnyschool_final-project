@@ -3,14 +3,8 @@ const User = require('../models/user');
 const FRequestCtrl = require('./friend-request.ctrl');
 
 class UsersCtrl {
-  static getById(id, params = {password: false}) {
-    if (params.password === true) {
-      return User.findById(id);
-    } else {
-      const user = User.findById(id);
-      user.password = undefined;
-      return user;
-    }
+  static getById(id) {
+    return User.findById(id);
   }
 
   static exists(params) {
@@ -56,10 +50,10 @@ class UsersCtrl {
 
   static checkFriend(from, to) {
     return User.aggregate([
-      { "$match": { _id: mongoose.Types.ObjectId(from) } },
+      { $match: { _id: mongoose.Types.ObjectId(from) } },
       {
         $project: {
-          "isFriend" : {
+          isFriend : {
             $in: [ mongoose.Types.ObjectId(to), "$friends.userId" ]
           }
         }
@@ -115,7 +109,7 @@ class UsersCtrl {
 
   static async getFriends(userId, page) {
     const friends = await User.aggregate([
-      { "$match": { _id: mongoose.Types.ObjectId(userId) } },
+      { $match: { _id: mongoose.Types.ObjectId(userId) } },
       {
         $project: {
           friends: { $slice: [ '$friends', (page - 1) * 10, 10 ] } 
@@ -128,9 +122,9 @@ class UsersCtrl {
 
   static async friendsCount(userId) {
     const friendsCount = await User.aggregate([
-      { "$match": { _id: mongoose.Types.ObjectId(userId) } },
+      { $match: { _id: mongoose.Types.ObjectId(userId) } },
       {
-        $project: { "friendsCount": {$size: '$friends'} }
+        $project: { friendsCount: { $size: '$friends' } }
       }
     ]);
     

@@ -7,7 +7,6 @@ const AuthCtrl = require('../controllers/auth.ctrl');
 const UsersCtrl = require('../controllers/users.ctrl.js');
 const AppError = require('../managers/app-error');
 const Mail = require('../managers/mail-manager');
-const safeUserData = require('../managers/safe-userdata');
 const validationResult = require('../middlewares/validation-result');
 const isLoggedIn = require('../middlewares/token-validator');
 
@@ -47,11 +46,10 @@ router
           subject: 'Account confirmation',
           html: `Click <a href="http://${process.env.frontendHost}:${process.env.frontendPort}/verify?token=${token}">HERE</a> to verify your account`,
         });
+        
+        res.onSuccess({}, "User created");
 
-        safeUserdata = safeUserData(userdata.toObject());
-        res.onSuccess(safeUserdata, "User created");
-
-        await mail.send();
+        // await mail.send();
       } catch (e) {
         res.onError(new AppError(e, 400));
       }
@@ -87,7 +85,7 @@ router
     async (req, res) => {
       try {
         const user = await UsersCtrl.getById(req.userData.userId);
-        res.onSuccess(safeUserData(user.toObject()), "");
+        res.onSuccess(user.toObject(), "");
       } catch (e) {
         res.onError(new AppError(e, 401));
       }

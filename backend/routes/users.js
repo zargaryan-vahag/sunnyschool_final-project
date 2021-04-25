@@ -9,7 +9,6 @@ const upload = require('../middlewares/upload');
 const UsersCtrl = require('../controllers/users.ctrl');
 const FRequestCtrl = require('../controllers/friend-request.ctrl');
 const AppError = require('../managers/app-error');
-const safeUserData = require('../managers/safe-userdata');
 
 router.route('/')
   .get(
@@ -43,7 +42,9 @@ router.route('/')
     body('hometown')
       .exists()
       .isLength({ max: 32 }).bail(),
-    body('gender').exists(),
+    body('gender')
+      .exists()
+      .isFloat({ min: 0, max: 2 }),
     validationResult,
     async (req, res) => {
       try {
@@ -53,9 +54,9 @@ router.route('/')
         await UsersCtrl.editById(req.userData.userId, {
           firstname: req.body.firstname,
           lastname: req.body.lastname,
-          hometown: req.body.hometown,
-          gender: req.body.gender,
-          birthday: req.body.birthday,
+          "info.hometown": req.body.hometown,
+          "info.gender": req.body.gender,
+          "info.birthday": req.body.birthday,
         });
         res.onSuccess({}, "User updated");
       } catch (e) {

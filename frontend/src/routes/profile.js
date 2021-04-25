@@ -635,22 +635,22 @@ export default function Profile(props) {
                         </Box>
                         <hr />
                         <Box>
-                          {(user.data.hometown != '') ? (
+                          {(user.data.info.hometown) ? (
                             <Box display="flex" justifyContent="space-between" m={1}>
                               <Box>Hometown</Box>
-                              <Box>{user.data.hometown}</Box>
+                              <Box>{user.data.info.hometown}</Box>
                             </Box>
                           ) : null}
-                          {/* {(user.data.gender != 0) ? ( */}
+                          {(user.data.info.gender) ? (
                             <Box display="flex" justifyContent="space-between" m={1}>
                               <Box>Gender</Box>
-                              <Box>{genderList[user.data.gender]}</Box>
+                              <Box>{genderList[user.data.info.gender]}</Box>
                             </Box>
-                          {/* ) : null} */}
-                          {(user.data.birthday != null) ? (
+                          ) : null}
+                          {(user.data.info.birthday) ? (
                             <Box display="flex" justifyContent="space-between" m={1}>
                               <Box>Birthday</Box>
-                              <Box>{birthday(user.data.birthday)}</Box>
+                              <Box>{birthday(user.data.info.birthday)}</Box>
                             </Box>
                           ) : null}
                         </Box>

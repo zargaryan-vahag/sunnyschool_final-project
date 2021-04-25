@@ -47,12 +47,12 @@ export default function Edit(props) {
   const formFields = {
     firstname: props.userData.firstname,
     lastname: props.userData.lastname,
-    hometown: props.userData.hometown,
-    gender: props.userData.gender,
+    hometown: props.userData.info.hometown,
+    gender: props.userData.info.gender,
   }
 
-  if (props.userData.birthday) {
-    formFields.birthday = props.userData.birthday;
+  if (props.userData.info.birthday) {
+    formFields.birthday = props.userData.info.birthday;
   }
 
   return (
@@ -94,7 +94,6 @@ export default function Edit(props) {
                 gender: Yup.number()
                   .min(0, 'invalid gender')
                   .max(2, 'invalid gender')
-                  .required('Choose gender'),
               })}
               onSubmit={async (values) => {
                 const response = await (
