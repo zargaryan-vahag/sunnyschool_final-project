@@ -1,0 +1,59 @@
+{
+  "name": "socialmedia",
+  "version": "1.0.0",
+  "description": "Experimental App",
+  "scripts": {
+    "test": "jest --verbose ./test",
+    "start": "parcel ./src/index.html",
+    "build": "parcel build ./src/index.html",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix"
+  },
+  "keywords": [],
+  "author": "Vahag Zargaryan",
+  "license": "proprietary",
+  "dependencies": {
+    "@material-ui/core": "^4.11.3",
+    "@material-ui/icons": "^4.9.1",
+    "@material-ui/lab": "^4.0.0-alpha.57",
+    "@types/react": "^17.0.3",
+    "emoji-picker-react": "^3.4.4",
+    "formik": "^2.2.6",
+    "moment": "^2.29.1",
+    "notistack": "^1.0.6",
+    "prettier": "^2.2.1",
+    "react": "^17.0.2",
+    "react-async": "^10.0.1",
+    "react-bottom-scroll-listener": "^5.0.0",
+    "react-dom": "^17.0.2",
+    "react-fb-image-grid": "^0.1.5",
+    "react-helmet": "^6.1.0",
+    "react-image": "^4.0.3",
+    "react-moment": "^1.1.1",
+    "react-redux": "^7.2.3",
+    "react-router-dom": "^5.2.0",
+    "react-scroll": "^1.8.2",
+    "react-sticky-box": "^0.9.3",
+    "socket.io-client": "^4.0.1",
+    "yup": "^0.32.9"
+  },
+  "devDependencies": {
+    "babel-eslint": "^10.0.3",
+    "babel-plugin-import": "^1.13.3",
+    "eslint": "^7.23.0",
+    "eslint-config-prettier": "^6.10.0",
+    "eslint-config-recommended": "^4.0.0",
+    "eslint-plugin-compat": "^3.5.1",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-jest": "^23.7.0",
+    "eslint-plugin-jsx-a11y": "^6.4.1",
+    "eslint-plugin-prettier": "^3.1.2",
+    "eslint-plugin-react": "^7.23.1",
+    "eslint-plugin-react-hooks": "^4.2.0",
+    "parcel": "^2.0.0-beta.2",
+    "react-test-renderer": "^17.0.2"
+  },
+  "browserslist": [
+    "last 2 Chrome versions"
+  ]
+}

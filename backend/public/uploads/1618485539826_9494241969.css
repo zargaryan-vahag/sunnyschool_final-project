@@ -1,0 +1,21 @@
+/* button:nth-child(2) {
+	animation: uzbek 1s infinite;
+  background-color: white;
+  margin-left: 0px;
+}
+
+@keyframes uzbek{
+	0% {
+    margin-left: 0px;
+    background-color: orange;
+  }
+
+  100% {
+    margin-left: 100px;
+    background-color: blue;
+  }
+} */
+
+*[style~="display: flex;"]{
+  color: red;
+}
