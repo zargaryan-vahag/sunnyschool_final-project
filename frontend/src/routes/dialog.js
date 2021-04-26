@@ -111,6 +111,7 @@ export default function Dialogs(props) {
   });
   const [dialogMembers, setDialogMembers] = useState({});
   const [read, setRead] = useState(true);
+  const [online, setOnline] = useState(false);
 
   const newMessage = useCallback((data) => {
     if (
@@ -178,6 +179,10 @@ export default function Dialogs(props) {
     setRead(true);
   }, [read]);
 
+  const checkOnlineStatus = useCallback((data) => {
+    setOnline(data.online);
+  }, [online]);
+
   useEffect(() => {
     if (dialog.read && dialog.read == props.userData._id) {
       socket.emit('read', {
@@ -215,14 +220,20 @@ export default function Dialogs(props) {
         page: dialog.page
       });
 
+      socket.emit("online_status", {
+        userId: user.data._id
+      });
+
       socket.on("new_message", newMessage);
       socket.on("get_messages", getMessages);
       socket.on("read", userRead);
+      socket.on("online_status", checkOnlineStatus);
 
       return () => {
         socket.off("new_message", newMessage);
         socket.off("get_messages", getMessages);
         socket.on("read", userRead);
+        socket.off("online_status", checkOnlineStatus);
       };
     }
   }, [user]);
@@ -271,6 +282,7 @@ export default function Dialogs(props) {
                         username={user.data.username}
                         imageName={user.data.avatar}
                         imageWidth={40}
+                        showOnlineStatus={online}
                       />
                     </Box>
                   </Box>
@@ -303,7 +315,7 @@ export default function Dialogs(props) {
                           <div
                             {...refProp}
                             key={message._id}
-                            className={classes.messageInput}
+                            className={classes.message}
                           >
                             <Box>
                               {
