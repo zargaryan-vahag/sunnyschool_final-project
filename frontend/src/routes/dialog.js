@@ -13,6 +13,7 @@ import FiberManualRecordIcon from '@material-ui/icons/FiberManualRecord';
 
 import config from '../../env.json';
 import { getToken } from '../managers/token-manager';
+import nl2br from '../managers/nl2br';
 import { SocketContext } from '../context/socket';
 import Info from '../components/info.js';
 import Link from '../components/link';
@@ -288,7 +289,7 @@ export default function Dialogs(props) {
                             <UserMessage
                               authorData={dialogMembers[message.userId._id || message.userId]}
                               postData={message}
-                              content={message.text}
+                              content={nl2br(message.text)}
                             />
                           </div>
                         );
@@ -303,9 +304,15 @@ export default function Dialogs(props) {
                       userData={props.userData}
                       textarea={{
                         placeholder: "Write a message...",
-                        multiline: false,
+                        // multiline: false,
                         autoComplete: 'off',
                         autoFocus: true,
+                        // onKeyPress: (e) => {
+                        //   console.log("keypress", e);
+                        // },
+                        // onSubmit: (e) => {
+                        //   console.log("submit", e);
+                        // }
                       }}
                       fileInput={false}
                       buttonText="Send"

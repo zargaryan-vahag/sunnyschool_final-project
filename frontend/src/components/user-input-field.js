@@ -171,6 +171,15 @@ export default function UserInputField(props) {
                     handleChange(e);
                     handlePostTextChange(e);
                   }}
+                  onKeyPress={(e) => {
+                    if (e.shiftKey && e.key == "Enter") {
+                      e.preventDefault();
+                      setPostText(postText + "\n");
+                    } else if (!e.shiftKey && e.key == "Enter") {
+                      e.preventDefault();
+                      e.target.form.submit.click();
+                    }
+                  }}
                   disabled={props.disabled}
                   {...props.textarea}
                 />
@@ -197,6 +206,7 @@ export default function UserInputField(props) {
                     type="submit"
                     variant="contained"
                     color="primary"
+                    name="submit"
                     className={classes.button}
                     disabled={props.disabled}
                   >
@@ -223,6 +233,7 @@ UserInputField.defaultProps = {
   fileInput: true,
   buttonText: 'Post',
   disabled: false,
+  shiftSubmit: false,
 };
 
 UserInputField.propTypes = {
@@ -232,4 +243,5 @@ UserInputField.propTypes = {
   onPost: PropTypes.func,
   buttonText: PropTypes.string,
   disabled: PropTypes.bool,
+  shiftSubmit: PropTypes.bool,
 };

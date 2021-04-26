@@ -47,7 +47,7 @@ router.route('/')
 
           await PostsCtrl.add({
             author: req.userData.userId,
-            content: req.body.postText,
+            content: req.body.postText.trim(),
             files: files,
           });
 

@@ -17,6 +17,7 @@ import UserInputField from './user-input-field';
 import UserMessage from './user-message';
 import AlertDialog from './alert-dialog';
 import { getToken } from '../managers/token-manager';
+import nl2br from '../managers/nl2br';
 
 const baseURL = config.BACKEND_PROTOCOL + '://' + config.BACKEND_HOST + ':' + config.BACKEND_PORT;
 
@@ -145,7 +146,7 @@ function PostBody(props) {
           color: 'black',
         }}
       >
-        {props.postData.content}
+        {nl2br(props.postData.content)}
       </Box>
       <Box
         style={{

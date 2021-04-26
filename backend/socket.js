@@ -70,7 +70,7 @@ module.exports = (server) => {
           const dialog = await DialogCtrl.newMessage({
             from: client.userId,
             to: data.to,
-            text: data.text
+            text: data.text.trim()
           });
           
           client.emit('new_message', dialog);

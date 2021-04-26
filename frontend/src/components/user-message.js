@@ -62,6 +62,7 @@ UserMessage.propTypes = {
   imageWidth: PropTypes.number,
   content: PropTypes.oneOfType([
     PropTypes.func,
-    PropTypes.string
+    PropTypes.string,
+    PropTypes.element,
   ])
 };

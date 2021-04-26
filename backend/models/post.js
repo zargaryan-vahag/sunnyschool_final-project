@@ -3,7 +3,7 @@ const Schema = mongoose.Schema;
 const { ObjectId } = Schema.Types;
 
 const LikeSchema = new Schema({ 
-  userId: { type: ObjectId, ref: 'User', unique: true },
+  userId: { type: ObjectId, ref: 'User' },
   timestamp: Date
 }, {
   versionKey: false,
