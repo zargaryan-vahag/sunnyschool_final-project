@@ -88,7 +88,9 @@ module.exports = (server) => {
         await DialogCtrl.read(data.dialogId, client.userId);
 
         if (onlineUsers.has(data.interlocutor)) {
-          onlineUsers.get(data.interlocutor).emit('read');
+          onlineUsers.get(data.interlocutor).emit('read', {
+            dialogId: data.dialogId
+          });
         }
       } catch (e) {
         console.log(e);

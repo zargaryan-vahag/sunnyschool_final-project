@@ -61,6 +61,17 @@ export default function Dialogs(props) {
     }
   }, [dialogs]);
 
+  const userRead = useCallback((data) => {
+    for (let i in dialogs) {
+      if (dialogs[i]._id == data.dialogId) {
+        dialogs[i].read = null;
+        setDialogs([...dialogs]);
+        
+        break;
+      }
+    }
+  }, [dialogs]);
+
   useEffect(async () => {
     const Dialogs = await (
       await fetch(
@@ -80,9 +91,11 @@ export default function Dialogs(props) {
   useEffect(() => {
     if (dialogs) {
       socket.on("new_message", newMessage);
+      socket.on("read", userRead);
 
       return () => {
         socket.off("new_message", newMessage);
+        socket.on("read", userRead);
       };
     }
   }, [dialogs]);
@@ -144,6 +157,10 @@ export default function Dialogs(props) {
                       display="flex"
                       alignItems="center"
                       justifyContent="space-between"
+                      p="4px 4px"
+                      style={{
+                        backgroundColor: (dialog.read == dialog.interlocutor._id) ? '#F5F6F8' : 'unset',
+                      }}
                     >
                       <Box
                         width="100%"

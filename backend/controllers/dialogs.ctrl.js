@@ -83,14 +83,14 @@ class DialogCtrl {
     
     if (dialog[0]) {
       const messagesCount = dialog[0].messagesCount
-      let limit = 15;
+      let limit = 25;
       let offset = messagesCount - params.page * limit;
       if (offset < 0) {
         offset = 0;
         limit = messagesCount - (params.page - 1) * limit;
       }
       
-      if (params.page * limit - messagesCount < 15 && limit > 0) {
+      if (params.page * limit - messagesCount < 25 && limit > 0) {
         return Dialog.findOne({
           _id: dialog[0]._id
         }, {
@@ -135,14 +135,14 @@ class DialogCtrl {
     ]);
     
     const messagesCount = dialog[0].messagesCount
-    let limit = 15;
+    let limit = 25;
     let offset = messagesCount - params.page * limit;
     if (offset < 0) {
       offset = 0;
       limit = messagesCount - (params.page - 1) * limit;
     }
     
-    if (params.page * limit - messagesCount < 15 && limit > 0) {
+    if (params.page * limit - messagesCount < 25 && limit > 0) {
       return Dialog.findOne({
         _id: dialog[0]._id
       }, {

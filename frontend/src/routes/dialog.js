@@ -33,36 +33,48 @@ const useStyles = makeStyles((theme) => ({
     textAlign: 'center',
   },
   dialog: {
-    position: 'relative',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    maxHeight: 'calc(100vh - 160px)',
+    height: '100%',
   },
   dialogHeader: {
-    position: 'absolute',
     width: '100%',
-    top: '0',
     backgroundColor: 'white',
     paddingBottom: '10px',
     borderBottom: 'solid 1px #C4C4C4',
-    marginTop: '-50px',
   },
   dialogBody: {
-    height: '60vh',
+    height: '100%',
     overflowY: 'auto',
-    marginTop: '50px',
-    marginBottom: '95px',
-    // paddingLeft: '70px',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'flex-end',
     wordBreak: 'break-word',
   },
   dialogFooter: {
-    position: 'absolute',
     width: '100%',
     bottom: '0',
     backgroundColor: 'white',
     paddingTop: '10px',
     borderTop: 'solid 1px #C4C4C4',
-    marginBottom: '-95px',
+  },
+  message: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    "& .hidden-button": {
+      display: "none",
+    },
+    "&:hover": {
+      backgroundColor: '#F5F6F8',
+    },
+    "&:hover .hidden-button": {
+      display: "flex",
+    }
+  },
+  messageInput: {
+    '& textarea': {
+      overflowY: 'auto !important',
+      maxHeight: '100px',
+    }
   }
 }));
 
@@ -110,7 +122,7 @@ export default function Dialogs(props) {
         read: data.read,
         page: 2,
         messages: [
-          ...dialog.messages.slice(-14),
+          ...dialog.messages.slice(-1 * (config.MESSAGE_PER_PAGE - 1)),
           data.messages[0]
         ]
       }));
@@ -272,7 +284,10 @@ export default function Dialogs(props) {
                       onScroll(e, user.data._id);
                     }}
                   >
-                    <div style={{width: '100%'}}>
+                    <Box style={{
+                      width: '100%',
+                      paddingBottom: '5px',
+                    }}>
                       {dialog.messages && dialog.messages.map((message, index) => {
                         const refProp = {};
                         if (dialog.scrollToIndex && index == dialog.scrollToIndex) {
@@ -280,39 +295,54 @@ export default function Dialogs(props) {
                         } else if (index == dialog.messages.length - 1) {
                           refProp.ref = scrollElem;
                         }
+                        
+                        const newMessageDate = new Date(message.createdAt).getTime();
+                        const lastMessageDate = new Date(dialog.messages[index - 1]?.createdAt).getTime();
 
                         return (
                           <div
                             {...refProp}
                             key={message._id}
+                            className={classes.messageInput}
                           >
-                            <UserMessage
-                              authorData={dialogMembers[message.userId._id || message.userId]}
-                              postData={message}
-                              content={nl2br(message.text)}
-                            />
+                            <Box>
+                              {
+                                index != 0 && 
+                                (
+                                  message.userId == dialog.messages[index - 1].userId || 
+                                  message.userId._id == dialog.messages[index - 1].userId ||
+                                  message.userId._id == dialog.messages[index - 1].userId._id
+                                ) && 
+                                newMessageDate - lastMessageDate < 60000
+                              ? (
+                                <Box ml="56px" mb="8px">{nl2br(message.text)}</Box>
+                              ) : (
+                                <UserMessage
+                                  authorData={dialogMembers[message.userId._id || message.userId]}
+                                  postData={message}
+                                  content={nl2br(message.text)}
+                                />
+                              )}
+                            </Box>
+                            <Box>
+                              {/* <span className="hidden-button">...</span> */}
+                            </Box>
                           </div>
                         );
                       })}
                       {!user.data.isFriend && (
                         <Info text={"Add " + user.data.firstname + " to your friends to write message"} />
                       )}
-                    </div>
+                    </Box>
                   </Box>
                   <Box className={classes.dialogFooter}>
                     <UserInputField
                       userData={props.userData}
                       textarea={{
                         placeholder: "Write a message...",
-                        // multiline: false,
                         autoComplete: 'off',
                         autoFocus: true,
-                        // onKeyPress: (e) => {
-                        //   console.log("keypress", e);
-                        // },
-                        // onSubmit: (e) => {
-                        //   console.log("submit", e);
-                        // }
+                        className: classes.messageInput,
                       }}
                       fileInput={false}
                       buttonText="Send"

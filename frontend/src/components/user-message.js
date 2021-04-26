@@ -19,7 +19,7 @@ export default function UserMessage(props) {
   const classes = useStyles();
   
   return (
-    <Box display="flex" mt={2} mr={2} mb={2}>
+    <Box display="flex" mt={2} mr={2} mb={1} ml={1}>
       <Box mr={1}>
         <UserAvatar
           username={props.authorData.username}
