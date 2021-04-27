@@ -22,6 +22,7 @@ import Edit from './routes/edit';
 
 import './css/global-styles.css';
 import authHandler from './managers/auth-handler';
+import Chat from './modules/chat';
 
 import { SocketContext, socket } from './context/socket';
 
@@ -80,6 +81,7 @@ export default function App() {
               <Redirect to="/news"/>
             </Route>
           </Switch>
+          <Chat userData={user.data}/>
         </Router>
       </SocketContext.Provider>
     );

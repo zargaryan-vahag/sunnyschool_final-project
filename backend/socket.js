@@ -121,12 +121,19 @@ module.exports = (server) => {
           throw new Error("Access denied");
         }
 
-        const result = await DialogCtrl.delMessage(data.dialogId, data.messageId);
+        await DialogCtrl.delMessage(data.dialogId, data.messageId);
         
         client.emit('del_message', dialog);
       } catch (e) {
         console.log(e);
       }
     });
+
+    client.on('public_message', (data) => {
+      data.message = data.message.trim();
+      if (data.message != "") {
+        io.sockets.emit('public_message', data);
+      }
+    })
   });
 };

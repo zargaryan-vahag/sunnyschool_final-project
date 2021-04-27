@@ -1,4 +1,4 @@
-import React, { Fragment, useRef, useEffect, useState, useCallback, useContext } from 'react';
+import React, { useRef, useEffect, useState, useCallback, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { makeStyles } from '@material-ui/core/styles';
 import { AppBar, Toolbar, Typography, Button } from '@material-ui/core';

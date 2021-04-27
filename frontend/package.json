@@ -31,6 +31,7 @@
     "react-image": "^4.0.3",
     "react-moment": "^1.1.1",
     "react-redux": "^7.2.3",
+    "react-resizable": "^1.11.1",
     "react-router-dom": "^5.2.0",
     "react-scroll": "^1.8.2",
     "react-sticky-box": "^0.9.3",
