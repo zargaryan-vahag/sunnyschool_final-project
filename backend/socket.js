@@ -113,5 +113,20 @@ module.exports = (server) => {
         console.log(e);
       }
     });
+
+    client.on('del_message', async (data) => {
+      try {
+        const dialog = await DialogCtrl.getMessage(data.dialogId, data.messageId);
+        if (dialog.messages[0].userId._id != client.userId) {
+          throw new Error("Access denied");
+        }
+
+        const result = await DialogCtrl.delMessage(data.dialogId, data.messageId);
+        
+        client.emit('del_message', dialog);
+      } catch (e) {
+        console.log(e);
+      }
+    });
   });
 };

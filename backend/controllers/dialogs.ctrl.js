@@ -176,6 +176,28 @@ class DialogCtrl {
       ]
     })
   }
+
+  static getMessage(dialogId, messageId) {
+    return Dialog.findOne({
+      _id: dialogId,
+      "messages._id": messageId
+    }, {
+      'messages.$': 1
+    }).select("+messages")
+      .populate("messages.userId")
+      .lean()
+      .exec();
+  }
+
+  static delMessage(dialogId, messageId) {
+    return Dialog.updateOne({
+      _id: dialogId
+    }, {
+      $pull: {
+        messages: { _id: messageId }
+      }
+    });
+  }
 }
 
 module.exports = DialogCtrl;

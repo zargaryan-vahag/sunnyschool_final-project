@@ -10,6 +10,10 @@ import ArrowBackIosIcon from '@material-ui/icons/ArrowBackIos';
 import Paper from '@material-ui/core/Paper';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import FiberManualRecordIcon from '@material-ui/icons/FiberManualRecord';
+import IconButton from '@material-ui/core/IconButton';
+import MoreVertIcon from '@material-ui/icons/MoreVert';
+import Menu from '@material-ui/core/Menu';
+import MenuItem from '@material-ui/core/MenuItem';
 
 import config from '../../env.json';
 import { getToken } from '../managers/token-manager';
@@ -61,13 +65,13 @@ const useStyles = makeStyles((theme) => ({
     display: 'flex',
     justifyContent: 'space-between',
     "& .hidden-button": {
-      display: "none",
+      visibility: "hidden",
     },
     "&:hover": {
       backgroundColor: '#F5F6F8',
     },
     "&:hover .hidden-button": {
-      display: "flex",
+      visibility: "visible",
     }
   },
   messageInput: {
@@ -89,7 +93,7 @@ export default function Dialogs(props) {
     }
   }
 
-  function onScroll (e, userId) {
+  function onScroll(e, userId) {
     if (e.target.scrollTop == 0) {
       socket.emit('get_messages', {
         dialogId: dialog._id,
@@ -97,7 +101,23 @@ export default function Dialogs(props) {
         page: dialog.page
       });
     }
-  };
+  }
+  
+  function handleOpen(event, message) {
+    setAnchorEl(event.currentTarget);
+    setTargetMessage(message);
+  }
+
+  function handleClose() {
+    setAnchorEl(null);
+  }
+
+  function deleteMessage(dialogId, messageId) {
+    socket.emit('del_message', {
+      dialogId,
+      messageId
+    });
+  }
   
   const classes = useStyles();
   const baseURL = config.BACKEND_PROTOCOL + "://" + config.BACKEND_HOST + ":" + config.BACKEND_PORT;
@@ -112,6 +132,10 @@ export default function Dialogs(props) {
   const [dialogMembers, setDialogMembers] = useState({});
   const [read, setRead] = useState(true);
   const [online, setOnline] = useState(false);
+
+  const [anchorEl, setAnchorEl] = useState(null);
+  const openMenu = Boolean(anchorEl);
+  const [targetMessage, setTargetMessage] = useState(null);
 
   const newMessage = useCallback((data) => {
     if (
@@ -183,6 +207,10 @@ export default function Dialogs(props) {
     setOnline(data.online);
   }, [online]);
 
+  const messageDeleted = useCallback((data) => {
+    document.getElementById(data.messages[0]._id).style.display = 'none';
+  }, []);
+
   useEffect(() => {
     if (dialog.read && dialog.read == props.userData._id) {
       socket.emit('read', {
@@ -228,12 +256,14 @@ export default function Dialogs(props) {
       socket.on("get_messages", getMessages);
       socket.on("read", userRead);
       socket.on("online_status", checkOnlineStatus);
+      socket.on("del_message", messageDeleted);
 
       return () => {
         socket.off("new_message", newMessage);
         socket.off("get_messages", getMessages);
-        socket.on("read", userRead);
+        socket.off("read", userRead);
         socket.off("online_status", checkOnlineStatus);
+        socket.off("del_message", messageDeleted);
       };
     }
   }, [user]);
@@ -310,38 +340,78 @@ export default function Dialogs(props) {
                         
                         const newMessageDate = new Date(message.createdAt).getTime();
                         const lastMessageDate = new Date(dialog.messages[index - 1]?.createdAt).getTime();
+                        let flag = false;
 
+                        if (index != 0 && newMessageDate - lastMessageDate < 60000) {
+                          if (message.userId._id) {
+                            flag = message.userId._id == dialog.messages[index - 1].userId ||
+                              message.userId._id == dialog.messages[index - 1].userId._id;
+                          } else {
+                            flag = message.userId == dialog.messages[index - 1].userId ||
+                              message.userId == dialog.messages[index - 1].userId._id;
+                          }
+                        }
+                          
                         return (
                           <div
                             {...refProp}
                             key={message._id}
-                            className={classes.message}
+                            id={message._id}
                           >
-                            <Box>
-                              {
-                                index != 0 && 
-                                (
-                                  message.userId == dialog.messages[index - 1].userId || 
-                                  message.userId._id == dialog.messages[index - 1].userId ||
-                                  message.userId._id == dialog.messages[index - 1].userId._id
-                                ) && 
-                                newMessageDate - lastMessageDate < 60000
-                              ? (
-                                <Box ml="56px" mb="8px">{nl2br(message.text)}</Box>
-                              ) : (
-                                <UserMessage
-                                  authorData={dialogMembers[message.userId._id || message.userId]}
-                                  postData={message}
-                                  content={nl2br(message.text)}
-                                />
-                              )}
-                            </Box>
-                            <Box>
-                              {/* <span className="hidden-button">...</span> */}
+                            <Box className={classes.message}>
+                              <Box>
+                                {(flag) ? (
+                                  <Box ml="56px" mb="8px">{nl2br(message.text)}</Box>
+                                ) : (
+                                  <UserMessage
+                                    authorData={dialogMembers[message.userId._id || message.userId]}
+                                    postData={message}
+                                    content={nl2br(message.text)}
+                                  />
+                                )}
+                              </Box>
+                              <Box width="24px">
+                                {(message.userId._id || message.userId) == props.userData._id && (
+                                  <IconButton
+                                    aria-label="more"
+                                    aria-controls={"message-menu"}
+                                    aria-haspopup="true"
+                                    className="hidden-button"
+                                    style={{
+                                      padding: '0',
+                                      marginTop: (flag) ? '0px' : '16px',
+                                    }}
+                                    onClick={(e) => {handleOpen(e, message)}}
+                                  >
+                                    <MoreVertIcon />
+                                  </IconButton>
+                                )}
+                              </Box>
                             </Box>
                           </div>
                         );
                       })}
+                      <Menu
+                        id={"message-menu"}
+                        className="das"
+                        anchorEl={anchorEl}
+                        keepMounted
+                        open={openMenu}
+                        onClose={handleClose}
+                        PaperProps={{
+                          style: {
+                            maxHeight: 45 * 4.5,
+                            width: '20ch',
+                          },
+                        }}
+                      >
+                        <MenuItem onClick={(e) => {
+                          handleClose();
+                          deleteMessage(dialog._id, targetMessage._id);
+                        }}>
+                          Delete
+                        </MenuItem>
+                      </Menu>
                       {!user.data.isFriend && (
                         <Info text={"Add " + user.data.firstname + " to your friends to write message"} />
                       )}
