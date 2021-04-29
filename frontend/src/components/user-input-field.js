@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import Picker, { SKIN_TONE_NEUTRAL } from 'emoji-picker-react';
 import { Formik, Form } from 'formik';
@@ -36,7 +36,19 @@ const useStyles = makeStyles({
 
 export default function UserInputField(props) {
   function onEmojiClick(e, emojiObject) {
-    setPostText(postText + emojiObject.emoji);
+    const input = fileElement.current.form.postText;
+    const lastValue = input.value;
+    input.value += emojiObject.emoji;
+
+    const event = new Event('input', { bubbles: true });
+    event.simulated = true;
+
+    const tracker = input._valueTracker;
+    if (tracker) {
+      tracker.setValue(lastValue);
+    }
+
+    input.dispatchEvent(event);
   }
 
   function toggleEmojiBox() {
@@ -77,6 +89,7 @@ export default function UserInputField(props) {
   const [emojiBox, setEmojiBox] = useState(false);
   const [postText, setPostText] = useState('');
   const [picker, setPicker] = useState(null);
+  const fileElement = useRef();
 
   const formFields = {
     postText: ''
@@ -118,6 +131,11 @@ export default function UserInputField(props) {
           onSubmit={handleSubmit}
           encType="multipart/form-data"
         >
+          <input
+            type="hidden"
+            name="ref"
+            ref={fileElement}
+          />
           <Box display="flex" justifyContent="space-between">
             <Grid item xs={1}>
               <Box display="flex" justifyContent="center" alignItems="center">
@@ -194,7 +212,7 @@ export default function UserInputField(props) {
               </Box>
             </Grid>
             <Grid item xs={1}>
-              <Box>
+              <Box display="flex" justifyContent="center">
                 <InsertEmoticonIcon
                   className={classes.emoji}
                   onClick={toggleEmojiBox}

@@ -641,12 +641,10 @@ export default function Profile(props) {
                               <Box>{user.data.info.hometown}</Box>
                             </Box>
                           ) : null}
-                          {(user.data.info.gender) ? (
-                            <Box display="flex" justifyContent="space-between" m={1}>
-                              <Box>Gender</Box>
-                              <Box>{genderList[user.data.info.gender]}</Box>
-                            </Box>
-                          ) : null}
+                          <Box display="flex" justifyContent="space-between" m={1}>
+                            <Box>Gender</Box>
+                            <Box>{genderList[user.data.info.gender]}</Box>
+                          </Box>
                           {(user.data.info.birthday) ? (
                             <Box display="flex" justifyContent="space-between" m={1}>
                               <Box>Birthday</Box>
