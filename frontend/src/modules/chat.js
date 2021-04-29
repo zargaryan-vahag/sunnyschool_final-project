@@ -94,17 +94,17 @@ export default function Chat(props) {
   const [checked, setChecked] = useState(false);
   const socket = useContext(SocketContext);
   const [messages, setMessages] = useState([]);
-  const [isScrolledBottom, setIsScrolledBottom] = useState(0);
+  const [isScrolledBottom, setIsScrolledBottom] = useState(true);
   const chatBody = useRef();
 
   const publicMessage = useCallback((data) => {
     setMessages((messages) => ([
-      ...messages,
+      ...messages.slice(-99),
       data
     ]));
     
     setIsScrolledBottom((isScrolledBottom) => {
-      if (isScrolledBottom) {
+      if (isScrolledBottom && chatBody.current) {
         chatBody.current.scrollTop = chatBody.current.scrollHeight - chatBody.current.clientHeight;
       }
       return isScrolledBottom;
@@ -139,6 +139,17 @@ export default function Chat(props) {
                   }}
                   ref={chatBody}
                 >
+                  {messages.length == 0 && (
+                    <Box
+                      display="flex"
+                      justifyContent="center"
+                      alignItems="center"
+                      color="darkgray"
+                      height="100%"
+                    >
+                      Public chat
+                    </Box>
+                  )}
                   {messages.map((message, index) => {
                     return (
                       <Box

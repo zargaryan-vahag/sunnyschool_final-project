@@ -130,7 +130,7 @@ module.exports = (server) => {
     });
 
     client.on('public_message', (data) => {
-      data.message = data.message.trim();
+      data.message = data.message.trim().slice(0,200);
       if (data.message != "") {
         io.sockets.emit('public_message', data);
       }
