@@ -25,6 +25,7 @@ const useStyles = makeStyles({
     width: '100%',
     height: 'min-content',
     padding: '0',
+    wordBreak: 'keep-all',
   },
   fileIcon: {
     cursor: 'pointer',
@@ -137,7 +138,7 @@ export default function UserInputField(props) {
             ref={fileElement}
           />
           <Box display="flex" justifyContent="space-between">
-            <Grid item xs={1}>
+            <Grid item xs={1} style={{maxWidth: 'inherit'}}>
               <Box display="flex" justifyContent="center" alignItems="center">
                 <UserAvatar
                   username={props.userData.username}
@@ -178,7 +179,7 @@ export default function UserInputField(props) {
                 </Box>
               </Box>
             </Grid>
-            <Grid item xs={10}>
+            <Grid item xs={10} style={{maxWidth: 'inherit'}}>
               <Box ml={1} mr={1}>
                 <Textarea
                   id="postText"
@@ -211,7 +212,7 @@ export default function UserInputField(props) {
                 </div>
               </Box>
             </Grid>
-            <Grid item xs={1}>
+            <Grid item xs={1} style={{maxWidth: 'inherit'}}>
               <Box display="flex" justifyContent="center">
                 <InsertEmoticonIcon
                   className={classes.emoji}

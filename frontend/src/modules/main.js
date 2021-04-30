@@ -13,7 +13,7 @@ const useStyles = makeStyles({
     maxWidth: '1000px',
     width: '100%',
     display: 'flex',
-    justifyContent: 'flex-between',
+    justifyContent: 'space-between',
     marginTop: '25px',
   },
   sidebar: {
@@ -32,17 +32,29 @@ export default function Main(props) {
   return (
     <main className={classes.main}>
       <div className={classes.container}>
-        <div className={classes.sidebar}>
-          <StickyBox offsetTop={100} offsetBottom={20}>
-            <Menu {...props} />
-          </StickyBox>
+        {!props.littleWindow && (
+          <div className={classes.sidebar}>
+            <StickyBox offsetTop={100} offsetBottom={20}>
+              <Menu {...props} />
+            </StickyBox>
+          </div>
+        )}
+        <div
+          style={{width: '100%'}}
+          className={(!props.littleWindow ? classes.content : '')}
+        >
+          {props.children}
         </div>
-        <div className={classes.content}>{props.children}</div>
       </div>
     </main>
   );
 }
 
+Main.defaultProps = {
+  menu: false,
+};
+
 Main.propTypes = {
   children: PropTypes.object,
+  littleWindow: PropTypes.bool,
 };

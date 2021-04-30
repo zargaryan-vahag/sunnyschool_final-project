@@ -1,4 +1,5 @@
 import React, { useState, useContext, useCallback, useEffect, useRef } from 'react';
+import PropTypes from 'prop-types';
 import { animateScroll } from "react-scroll";
 
 import Header from '../modules/header';
@@ -50,7 +51,6 @@ const useStyles = makeStyles((theme) => ({
     borderBottom: 'solid 1px #C4C4C4',
   },
   dialogBody: {
-    height: '100%',
     overflowY: 'auto',
     wordBreak: 'break-word',
   },
@@ -82,7 +82,7 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
 
-export default function Dialogs(props) {  
+export default function Dialog(props) {  
   function sendMessage(values, resetForm, to) {
     if (values.postText != '') {
       socket.emit('new_message', {
@@ -118,8 +118,9 @@ export default function Dialogs(props) {
       messageId
     });
   }
-  
+
   const classes = useStyles();
+  const userId = (props.littleWindow) ? props.userId : props.match.params.userId;
   const baseURL = config.BACKEND_PROTOCOL + "://" + config.BACKEND_HOST + ":" + config.BACKEND_PORT;
   const socket = useContext(SocketContext);
   const scrollElem = useRef();
@@ -139,7 +140,7 @@ export default function Dialogs(props) {
 
   const newMessage = useCallback((data) => {
     if (
-      data.messages[0].userId._id == props.match.params.userId ||
+      data.messages[0].userId._id == userId ||
       data.messages[0].userId._id == props.userData._id
     ) {
       setDialog((dialog) => ({
@@ -152,14 +153,14 @@ export default function Dialogs(props) {
         ]
       }));
 
-      if (data.read == props.match.params.userId) {
+      if (data.read == userId) {
         setRead(false);
       }
 
       if (data.messages[0].userId._id != props.userData._id) {
         socket.emit('read', {
           dialogId: data._id,
-          interlocutor: props.match.params.userId
+          interlocutor: userId
         });
       }
 
@@ -187,7 +188,7 @@ export default function Dialogs(props) {
         ]
       }));
 
-      if (data.read == props.match.params.userId) {
+      if (data.read == userId) {
         setRead(false);
       } else {
         setRead(true);
@@ -215,7 +216,7 @@ export default function Dialogs(props) {
     if (dialog.read && dialog.read == props.userData._id) {
       socket.emit('read', {
         dialogId: dialog._id,
-        interlocutor: props.match.params.userId
+        interlocutor: userId
       });
     }
   }, [dialog]);
@@ -223,7 +224,7 @@ export default function Dialogs(props) {
   useEffect(async () => {
     const User = await (
       await fetch(
-        baseURL + "/users/id/" + props.match.params.userId,
+        baseURL + "/users/id/" + userId,
         {
           method: 'GET',
           headers: {
@@ -234,7 +235,7 @@ export default function Dialogs(props) {
       )
     ).json();
     setUser(User);
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
     if (user) {
@@ -272,11 +273,14 @@ export default function Dialogs(props) {
     if (user.success) {
       return (
         <>
-          <Header {...props} />
+          {!props.littleWindow && <Header {...props} />}
           <Main {...props}>
             <div className={classes.root}>
               <Paper className={classes.paper}>
-                <Box className={classes.dialog}>
+                <Box
+                  className={classes.dialog}
+                  style={props.littleWindow ? {maxHeight: 'inherit'} : {}}
+                >
                   <Box
                     display="flex"
                     justifyContent="space-between"
@@ -284,9 +288,15 @@ export default function Dialogs(props) {
                     className={classes.dialogHeader}
                   >
                     <Box>
-                      <Link to="/dialogs">
-                        <ArrowBackIosIcon />
-                      </Link>
+                      {!props.littleWindow ? (
+                        <Link to="/dialogs">
+                          <ArrowBackIosIcon />
+                        </Link>
+                      ) : (
+                        <Box onClick={props.onBackClick}>
+                          <ArrowBackIosIcon />
+                        </Box>
+                      )}
                     </Box>
                     <Box
                       display="flex"
@@ -321,6 +331,9 @@ export default function Dialogs(props) {
                     flexDirection="column"
                     textAlign="initial"
                     className={classes.dialogBody}
+                    style={{
+                      height: props.bodyHeight,
+                    }}
                     id="chat-body"
                     onScroll={(e) => {
                       onScroll(e, user.data._id);
@@ -436,32 +449,46 @@ export default function Dialogs(props) {
               </Paper>
             </div>
           </Main>
-          <Footer />
+          {!props.littleWindow && <Footer {...props} />}
         </>
       );
     } else {
       return (
         <>
-          <Header {...props} />
+          {!props.littleWindow && <Header {...props} />}
           <Main {...props}>
             <Info text="User not found ;(" />
           </Main>
-          <Footer />
+          {!props.littleWindow && <Footer {...props} />}
         </>
       );
     }
   } else {
     return (
       <>
-        <Header {...props} />
+        {!props.littleWindow && <Header {...props} />}
         <Main {...props}>
           <Info
             text="Loading..."
             component={() => <CircularProgress color="inherit" />}
           />
         </Main>
-        <Footer />
+        {!props.littleWindow && <Footer {...props} />}
       </>
     );
   }
 }
+
+Dialog.defaultProps = {
+  littleWindow: false,
+  onBackClick: () => {},
+  userId: null,
+  bodyHeight: '100%',
+};
+
+Dialog.propTypes = {
+  littleWindow: PropTypes.bool,
+  onBackClick: PropTypes.func,
+  userId: PropTypes.any,
+  bodyHeight: PropTypes.string,
+};

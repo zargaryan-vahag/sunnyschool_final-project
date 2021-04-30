@@ -1,4 +1,5 @@
 import React, { useState, useContext, useCallback, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { useHistory } from "react-router-dom";
 import Moment from 'react-moment';
 import moment from 'moment';
@@ -102,7 +103,7 @@ export default function Dialogs(props) {
   
   return (
     <>
-      <Header {...props} />
+      {!props.littleWindow && <Header {...props} />}
       <Main {...props}>
         <div className={classes.root}>
           <Paper className={classes.paper}>
@@ -116,7 +117,10 @@ export default function Dialogs(props) {
                     backgroundColor: (dialog.read == props.userData._id) ? '#F5F6F8' : '',
                   }}
                   onClick={() => {
-                    redirect('/dialog/' + dialog.interlocutor._id);
+                    if (!props.littleWindow) {
+                      redirect('/dialog/' + dialog.interlocutor._id);
+                    }
+                    props.onDialogClick(dialog.interlocutor._id);
                   }}
                 >
                   <Box
@@ -210,7 +214,17 @@ export default function Dialogs(props) {
           </Paper>
         </div>
       </Main>
-      <Footer />
+      {!props.littleWindow && <Footer />}
     </>
   );
 }
+
+Dialogs.defaultProps = {
+  littleWindow: false,
+  onDialogClick: () => {},
+};
+
+Dialogs.propTypes = {
+  littleWindow: PropTypes.bool,
+  onDialogClick: PropTypes.func,
+};

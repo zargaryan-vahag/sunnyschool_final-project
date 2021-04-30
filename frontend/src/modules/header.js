@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState, useCallback, useContext } from 'react';
 import PropTypes from 'prop-types';
+import { SnackbarProvider } from 'notistack';
 import { makeStyles } from '@material-ui/core/styles';
 import { AppBar, Toolbar, Typography, Button } from '@material-ui/core';
 import ClickAwayListener from '@material-ui/core/ClickAwayListener';
@@ -13,7 +14,6 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import NotificationsIcon from '@material-ui/icons/Notifications';
 import Badge from '@material-ui/core/Badge';
 import Box from '@material-ui/core/Box';
-import { SnackbarProvider } from 'notistack';
 
 import config from '../../env.json';
 import { SocketContext } from '../context/socket';
@@ -54,7 +54,10 @@ const useStyles = makeStyles((theme) => ({
   },
   menu: {
     textTransform: 'none',
-  }
+  },
+  snackBar: {
+    zIndex: 500,
+  },
 }));
 
 export default function Header(props) {
@@ -209,6 +212,9 @@ export default function Header(props) {
   return (
     <>
       <SnackbarProvider
+        classes={{
+          containerRoot: classes.snackBar,
+        }}
         ref={providerRef}
         maxSnack={5}
         style={{

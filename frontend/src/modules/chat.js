@@ -7,7 +7,11 @@ import ForumIcon from '@material-ui/icons/Forum';
 import SendIcon from '@material-ui/icons/Send';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
+import Tabs from '@material-ui/core/Tabs';
+import Tab from '@material-ui/core/Tab';
 
+import Dialogs from '../routes/dialogs';
+import Dialog from '../routes/dialog';
 import { SocketContext } from '../context/socket';
 import Link from '../components/link';
 import UserAvatar from '../components/user-avatar';
@@ -19,20 +23,21 @@ const useStyles = makeStyles((theme) => ({
     bottom: 0,
     display: 'flex',
     justifyContent: 'center',
+    zIndex: 600,
   },
   root: {
     height: 180,
   },
   chatBox: {
     width: '100%',
-    maxWidth: '1000px',
+    // maxWidth: '1000px',
     position: 'relative',
   },
   wrapper: {
     width: 100 + theme.spacing(2),
     position: 'absolute',
     bottom: 0,
-    left: 0,
+    right: 0,
     "& .react-resizable-handle": {
       top: '0',
       botton: 'unset',
@@ -41,12 +46,13 @@ const useStyles = makeStyles((theme) => ({
     }
   },
   paper: {
-    zIndex: 1,
-    position: 'relative',
-    width: '300px',
+    width: '375px',
     height: '400px',
     marginBottom: '10px',
     padding: '10px',
+    position: 'absolute',
+    bottom: '22px',
+    right: '0',
   },
   polygon: {
     fill: theme.palette.common.white,
@@ -67,7 +73,13 @@ const useStyles = makeStyles((theme) => ({
   chatBody: {
     overflowY: 'auto',
     wordBreak: 'break-word',
-  }
+  },
+  tabs: {
+    borderRight: `1px solid ${theme.palette.divider}`,
+    "& button": {
+      minWidth: '50px',
+    },
+  },
 }));
 
 export default function Chat(props) {
@@ -87,15 +99,31 @@ export default function Chat(props) {
     const pos = chatBody.current.scrollTop + chatBody.current.clientHeight;
     setIsScrolledBottom(pos == chatBody.current.scrollHeight);
   }
+  
+  function a11yProps(index) {
+    return {
+      id: `horizontal-tab-${index}`,
+      'aria-controls': `horizontal-tabpanel-${index}`,
+    };
+  }
+
+  function handleTabChange (event, newValue) {
+    setTabValue(newValue);
+  }
 
   const classes = useStyles();
   const messageLength = 200;
+  const socket = useContext(SocketContext);
+
+  const chatBody = useRef();
+  const dialogs = useRef();
+  const dialog = useRef();
   const [currMessLength, setCurrMessLength] = useState(0);
   const [checked, setChecked] = useState(false);
-  const socket = useContext(SocketContext);
   const [messages, setMessages] = useState([]);
   const [isScrolledBottom, setIsScrolledBottom] = useState(true);
-  const chatBody = useRef();
+  const [tabValue, setTabValue] = useState(0);
+  const [userId, setUserId] = useState(null);
 
   const publicMessage = useCallback((data) => {
     setMessages((messages) => ([
@@ -131,6 +159,16 @@ export default function Chat(props) {
                 justifyContent="space-between"
                 flexDirection="column"
               >
+                <Tabs
+                  orientation="horizontal"
+                  variant="scrollable"
+                  value={tabValue}
+                  onChange={handleTabChange}
+                  className={classes.tabs}
+                >
+                  <Tab label="Public" {...a11yProps(0)} />
+                  <Tab label="Dialogs" {...a11yProps(1)} />
+                </Tabs>
                 <div
                   className={classes.chatBody}
                   id="chat-body"
@@ -139,104 +177,141 @@ export default function Chat(props) {
                   }}
                   ref={chatBody}
                 >
-                  {messages.length == 0 && (
-                    <Box
-                      display="flex"
-                      justifyContent="center"
-                      alignItems="center"
-                      color="darkgray"
-                      height="100%"
-                    >
-                      Public chat
-                    </Box>
-                  )}
-                  {messages.map((message, index) => {
-                    return (
+                  {tabValue == 0 ? (<>
+                    {messages.length == 0 && (
                       <Box
                         display="flex"
-                        key={index}
-                        mt={1}
-                        mb={1}
+                        justifyContent="center"
+                        alignItems="center"
+                        color="darkgray"
+                        height="100%"
                       >
+                        Public chat
+                      </Box>
+                    )}
+                    {messages.map((message, index) => {
+                      return (
                         <Box
                           display="flex"
-                          width="30px"
-                          mr={1}
+                          key={index}
+                          mt={1}
+                          mb={1}
                         >
-                          <UserAvatar
-                            username={message.username}
-                            imageName={message.avatar}
-                            imageWidth={30}
-                          />
+                          <Box
+                            display="flex"
+                            width="30px"
+                            mr={1}
+                          >
+                            <UserAvatar
+                              username={message.username}
+                              imageName={message.avatar}
+                              imageWidth={30}
+                            />
+                          </Box>
+                          <Box width="100%">
+                            <Link to={'/profile/' + message.username}>
+                              {message.firstname} {message.lastname}
+                            </Link> {message.message}
+                          </Box>
                         </Box>
-                        <Box width="100%">
-                          <Link to={'/profile/' + message.username}>
-                            {message.firstname} {message.lastname}
-                          </Link> {message.message}
-                        </Box>
-                      </Box>
-                    );
-                  })}
-                </div>
-                <Box
-                  height="70px"
-                  display="flex"
-                  justify-content="flex-end"
-                  flex-direction="column"
-                  borderTop="solid 1px darkgray"
-                >
-                  <form 
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      sendPublicMessage(e.target[0].value);
-                      e.target.reset();
-                      setCurrMessLength(0);
-                    }}
-                  >
-                    <Box
-                      display="flex"
-                      alignItems="center"
-                    >
-                      <Box>
-                        <TextField
-                          fullWidth
-                          variant="outlined"
-                          placeholder="Public message..."
-                          className={classes.textarea}
-                          name="message"
-                          autoComplete="off"
-                          onInput = {(e) =>{
-                            e.target.value = e.target.value.toString().slice(0, messageLength);
-                            setCurrMessLength(e.target.value.length);
+                      );
+                    })}
+                  </>) : tabValue == 1 ? (<>
+                    <div ref={dialogs}>
+                      <Dialogs
+                        {...props}
+                        littleWindow={true}
+                        onDialogClick={(userId) => {
+                          dialog.current.style.display = 'block';
+                          dialogs.current.style.display = 'none';
+                          setUserId(userId);
+                        }}
+                      />
+                    </div>
+                    <div style={{display: 'none'}} ref={dialog}>
+                      {userId && (
+                        <Dialog
+                          {...props}
+                          userId={userId}
+                          littleWindow={true}
+                          bodyHeight="109px"
+                          onBackClick={() => {
+                            dialog.current.style.display = 'none';
+                            dialogs.current.style.display = 'block';
+                            setUserId(null);
                           }}
                         />
-                      </Box>
+                      )}
+                    </div>
+                  </>) : null}
+                </div>
+                {tabValue == 0 && (
+                  <Box
+                    height="70px"
+                    display="flex"
+                    justify-content="flex-end"
+                    flex-direction="column"
+                    borderTop="solid 1px darkgray"
+                  >
+                    <form
+                      style={{
+                        width: '100%',
+                      }}
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        sendPublicMessage(e.target[0].value);
+                        e.target.reset();
+                        setCurrMessLength(0);
+                      }}
+                    >
                       <Box
                         display="flex"
-                        flexDirection="column"
                         alignItems="center"
                       >
-                        <Button type="submit">
-                          <SendIcon
-                            className={classes.chatButton}
-                            style={{
-                              fontSize: '24px',
+                        <Box width="100%">
+                          <TextField
+                            fullWidth
+                            variant="outlined"
+                            placeholder="Public message..."
+                            className={classes.textarea}
+                            name="message"
+                            autoComplete="off"
+                            onInput = {(e) =>{
+                              e.target.value = e.target.value.toString().slice(0, messageLength);
+                              setCurrMessLength(e.target.value.length);
                             }}
                           />
-                        </Button>
-                        <Box>
-                          <span style={{color: 'darkgrey'}}>
-                            {currMessLength} / {messageLength}
-                          </span>
+                        </Box>
+                        <Box
+                          display="flex"
+                          flexDirection="column"
+                          alignItems="center"
+                        >
+                          <Button type="submit">
+                            <SendIcon
+                              className={classes.chatButton}
+                              style={{
+                                fontSize: '24px',
+                              }}
+                            />
+                          </Button>
+                          <Box>
+                            <span style={{color: 'darkgrey'}}>
+                              {currMessLength} / {messageLength}
+                            </span>
+                          </Box>
                         </Box>
                       </Box>
-                    </Box>
-                  </form>
-                </Box>
+                    </form>
+                  </Box>
+                )}
               </Box>
             </Paper> 
           </Slide>
-          <Box>
+          <Box
+            display="flex"
+            justifyContent="flex-end"
+          >
             <ForumIcon
               className={classes.chatButton}
               onClick={handleChange}
