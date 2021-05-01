@@ -85,6 +85,7 @@ const useStyles = makeStyles((theme) => ({
 export default function Chat(props) {
   function handleChange() {
     setChecked(!checked);
+    setUserId(null);
   }
 
   function sendPublicMessage(message) {
@@ -109,6 +110,7 @@ export default function Chat(props) {
 
   function handleTabChange (event, newValue) {
     setTabValue(newValue);
+    setUserId(null);
   }
 
   const classes = useStyles();
