@@ -28,6 +28,10 @@ const useStyles = makeStyles((theme) => ({
   },
   tabs: {
     borderRight: `1px solid ${theme.palette.divider}`,
+    width: '100%',
+    "& button": {
+      minWidth: 'inherit',
+    },
   },
 }));
 
@@ -130,7 +134,7 @@ export default function Index(props) {
     <>
       <Header {...props} />
       <Main {...props}>
-        <Grid container spacing={1}>
+        <Grid container spacing={1} style={{width: '100%'}}>
           <Grid item xs={10}>
             <Box component="div" m={1}>
               {news.data.map((post) => {

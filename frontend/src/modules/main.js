@@ -40,8 +40,8 @@ export default function Main(props) {
           </div>
         )}
         <div
-          style={{width: '100%'}}
           className={(!props.littleWindow ? classes.content : '')}
+          style={{width: '100%'}}
         >
           {props.children}
         </div>
