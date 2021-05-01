@@ -16,7 +16,7 @@ const UserSchema = new Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true, select: false },
   status: { type: Number, default: userStatusManager.default },
-  isverified: { type: Boolean, default: true },
+  isverified: { type: Boolean, default: false },
   token: { type: String, select: false },
   avatar: { type: String, default: 'default_avatar.png' },
   firstname: { type: String, required: true },
