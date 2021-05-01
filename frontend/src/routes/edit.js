@@ -47,7 +47,7 @@ export default function Edit(props) {
   const formFields = {
     firstname: props.userData.firstname,
     lastname: props.userData.lastname,
-    hometown: props.userData.info.hometown,
+    hometown: props.userData.info.hometown || '',
     gender: props.userData.info.gender,
   }
 
@@ -89,6 +89,7 @@ export default function Edit(props) {
                   .matches(/^[A-Za-z]*$/, 'Last name must be in english')
                   .required('Last Name is required'),
                 hometown: Yup.string()
+                  .nullable()
                   .max(32, 'Hometown must be less than 32 characters')
                   .matches(/^[A-Za-z]*$/, 'Hometown must be in english'),
                 gender: Yup.number()
