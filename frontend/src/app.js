@@ -43,6 +43,7 @@ export default function App() {
       <SocketContext.Provider value={socket}>
         <Router>
           <Helmet bodyAttributes={{ style: 'background-color: #EDEEF0' }} />
+          <Route component={(props) => <Chat {...props} userData={user.data}/>}/>
           <Switch>
             <Route
               exact
@@ -81,7 +82,6 @@ export default function App() {
               <Redirect to="/news"/>
             </Route>
           </Switch>
-          <Chat userData={user.data}/>
         </Router>
       </SocketContext.Provider>
     );
