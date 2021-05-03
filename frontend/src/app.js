@@ -43,7 +43,13 @@ export default function App() {
       <SocketContext.Provider value={socket}>
         <Router>
           <Helmet bodyAttributes={{ style: 'background-color: #EDEEF0' }} />
-          <Route component={(props) => <Chat {...props} userData={user.data}/>}/>
+          <Route exact component={(props) => {
+            if (props.location.pathname.split('/')[1] != 'dialog') {
+              return (<Chat {...props} userData={user.data}/>);
+            } else {
+              return (<></>);
+            }
+          }}/>
           <Switch>
             <Route
               exact
