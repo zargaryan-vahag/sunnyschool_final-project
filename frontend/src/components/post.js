@@ -141,9 +141,10 @@ function PostBody(props) {
     <Box>
       <Box
         mb={1}
+        color="black"
+        textAlign="start"
         style={{
-          textAlign: 'start',
-          color: 'black',
+          wordBreak: 'break-word',
         }}
       >
         {nl2br(props.postData.content)}

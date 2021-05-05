@@ -71,8 +71,11 @@ export default function Menu(props) {
     setUnreadMessage(data.has);
   }, [unreadMessage]);
 
-  const newMessage = useCallback(() => {
-    if (props.match.path != "/dialog/:userId") {
+  const newMessage = useCallback((data) => {
+    if (
+      props.match.path != "/dialog/:userId" &&
+      props.userData._id != data.messages[0].userId._id
+    ) {
       setUnreadMessage(true);
     }
   }, [unreadMessage]);
@@ -85,6 +88,7 @@ export default function Menu(props) {
 
     return () => {
       socket.off("new_message", newMessage);
+      socket.off("has_unread_message", hasUnreadMessage);
     };
   }, []);
 
