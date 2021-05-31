@@ -22,6 +22,9 @@ const UserSchema = new Schema({
   firstname: { type: String, required: true },
   lastname: { type: String, required: true },
   friends: { type: [friendSchema], select: false },
+  communities: { type: [ObjectId], ref: 'Community', select: false },
+  followingCommunities: { type: [ObjectId], ref: 'Community', select: false },
+  followingCommunitiesCount: { type: Number, default: 0 },
   // options: {
   //   birthday: { type: Number, default: 0 },
   //   hometown: { type: Number, default: 0 },

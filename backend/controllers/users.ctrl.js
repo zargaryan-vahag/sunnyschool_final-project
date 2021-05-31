@@ -130,6 +130,72 @@ class UsersCtrl {
     
     return friendsCount[0].friendsCount;
   }
+
+  static addNewCommunity(userId, communityId) {
+    return User.updateOne({
+      _id: userId
+    }, {
+      $push: {
+        communities: {
+          $each: [communityId],
+          $position: 0
+        }
+      }
+    });
+  }
+
+  static addFollowingCommunity(userId, communityId) {
+    return User.updateOne({
+      _id: userId
+    }, {
+      $push: {
+        followingCommunities: {
+          $each: [communityId],
+          $position: 0
+        }
+      },
+      $inc: { followingCommunitiesCount: 1 }
+    });
+  }
+
+  static unFollowCommunity(userId, communityId) {
+    return User.updateOne({
+      _id: userId
+    }, {
+      $pull: {
+        followingCommunities: communityId
+      },
+      $inc: { followingCommunitiesCount: -1 }
+    });
+  }
+
+  static async getFollowingCommunities(userId, page) {
+    let communities = await User.aggregate([
+      { $match: { _id: mongoose.Types.ObjectId(userId) } },
+      {
+        $project: {
+          followingCommunities: { $slice: [ '$followingCommunities', (page - 1) * 10, 10 ] } 
+        }
+      }
+    ]);
+    
+    communities = await User.populate(communities, { path: 'followingCommunities', options: { lean: true } });
+    return communities[0].followingCommunities || [];
+  }
+
+  static async getCommunities(userId, page) {
+    let communities = await User.aggregate([
+      { $match: { _id: mongoose.Types.ObjectId(userId) } },
+      {
+        $project: {
+          communities: { $slice: [ '$communities', (page - 1) * 10, 10 ] } 
+        }
+      }
+    ]);
+    
+    communities = await User.populate(communities, { path: 'communities', options: { lean: true } });
+    return communities[0].communities;
+  }
 }
 
 module.exports = UsersCtrl;

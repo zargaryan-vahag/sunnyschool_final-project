@@ -27,16 +27,23 @@ class PostsCtrl {
       .skip((page - 1) * 10)
       .limit(10)
       .sort({ createdAt: -1 })
+      .lean()
       .exec();
 
     const result = [];
-    for (let post of posts) {
-      post = post.toObject();
+    for (const post of posts) {
       post.isLiked = await LikesCtrl.exists(post._id, userId);
       result.push(post);
     }
 
     return result;
+  }
+
+  static getCommunityPost(id) {
+    return Post.findById(id)
+      .populate('author')
+      .populate('community')
+      .exec();
   }
 
   static async findNews(params, userId, page) {
@@ -45,6 +52,7 @@ class PostsCtrl {
       .limit(10)
       .sort({ createdAt: -1 })
       .populate('author')
+      .populate('community')
       .exec();
 
     const result = [];
@@ -64,6 +72,7 @@ class PostsCtrl {
       .limit(10)
       .sort({ "likedUsers.createdAt": -1 })
       .populate('author')
+      .populate('community')
       .lean()
       .exec();
     

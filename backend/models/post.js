@@ -12,6 +12,7 @@ const LikeSchema = new Schema({
 
 const Post = new Schema({
   author: { type: ObjectId, ref: 'User' },
+  community: { type: ObjectId, ref: 'Community', default: null },
   content: { type: String, default: '' },
   files: [{ type: String }],
   likedUsers: { type: [LikeSchema], select: false },
