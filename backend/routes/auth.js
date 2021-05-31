@@ -49,7 +49,7 @@ router
         
         res.onSuccess({}, "User created");
 
-        // await mail.send();
+        await mail.send();
       } catch (e) {
         res.onError(new AppError(e, 400));
       }

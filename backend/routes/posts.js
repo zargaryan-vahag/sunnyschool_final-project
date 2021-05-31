@@ -10,6 +10,7 @@ const UsersCtrl = require('../controllers/users.ctrl');
 const PostsCtrl = require('../controllers/posts.ctrl');
 const AppError = require('../managers/app-error');
 const CommentsCtrl = require('../controllers/comments.ctrl');
+const CommunitiesCtrl = require('../controllers/communities.ctrl');
 
 router.route('/')
   .get(
@@ -41,17 +42,27 @@ router.route('/')
             throw new Error("Wrong data");
           }
           
-          const files = req.files.map((file) => {
+          const files = req.files ? req.files.map((file) => {
             return file.filename;
-          });
-
-          await PostsCtrl.add({
+          }) : [];
+          const params = {
             author: req.userData.userId,
             content: req.body.postText.trim(),
-            files: files,
-          });
+            files: files
+          };
 
-          res.onSuccess({}, "Post created");
+          if (req.body.communityId) {
+            const comm = await CommunitiesCtrl.getById(req.body.communityId);
+            if (comm && comm.creatorId == req.userData.userId) {
+              params.community = comm._id;
+            }
+          }
+
+          const newPost = await PostsCtrl.add(params);
+          if (params.community) {
+            await CommunitiesCtrl.addPost(params.community, newPost._id);
+          }
+          res.onSuccess(await PostsCtrl.getCommunityPost(newPost._id), "Post created");
         } else {
           throw new Error("Token not provided");
         }
@@ -76,6 +87,10 @@ router.route('/')
         if (post) {
           if (post.author == req.userData.userId) {
             await PostsCtrl.delete(req.body.postId);
+            if (post.community) {
+              await CommunitiesCtrl.delPost(post.community, post._id);
+            }
+            
             res.onSuccess({}, "Post deleted");
           } else {
             throw new Error("Assess denied");
@@ -98,13 +113,19 @@ router.route('/user/:userId')
       try {
         if (req.query.action == 'posts') {
           const userPosts = await PostsCtrl.find(
-            { author: req.params.userId },
+            {
+              author: req.params.userId,
+              community: null
+            },
             req.userData.userId,
             req.query.page
           );
           res.onSuccess(userPosts, "");
         } else if (req.query.action == 'postsCount') {
-          const count = await PostsCtrl.count({ author: req.params.userId });
+          const count = await PostsCtrl.count({
+            author: req.params.userId,
+            community: null
+          });
           res.onSuccess(count, "");
         } else {
           throw new Error("Unknown action");
