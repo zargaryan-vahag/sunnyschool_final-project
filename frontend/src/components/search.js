@@ -32,7 +32,7 @@ export default function Search() {
     setLoading(true);
 
     if (q != '') {
-      const response = await fetch(
+      let response = await fetch(
         baseURL + '/users?q=' + q,
         {
           method: 'GET',
@@ -43,13 +43,79 @@ export default function Search() {
         }
       );
       const users = await response.json();
+      users.data.forEach((user) => {
+        user.type = "user";
+      });
+
+      response = await fetch(
+        baseURL + '/communities?q=' + q,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            accesstoken: getToken(),
+          }
+        }
+      );
+      const communities = await response.json();
+      communities.data.forEach((community) => {
+        community.type = "community";
+      });
       
-      setOptions(users.data);
+      setOptions([...users.data, ...communities.data]);
     } else {
       setOptions([]);
     }
 
     setLoading(false);
+  }
+
+  function optionLabel(option) {
+    if (!option) {
+      return '';
+    }
+
+    return (option.type == "user")
+      ? option.firstname + " " + option.lastname + " " + option.username :
+    (option.type == "community")
+      ? option.name : "";
+  }
+
+  function optionRenderer(option) {
+    return (<>
+      <Link
+        to={
+          (option.type == "user") ? "/profile/" + option.username :
+          (option.type == "community") ? "/community/" + option._id : ""
+        }
+        style={{
+          display: 'block',
+          width: '100%',
+          padding: '6px 16px',
+        }}
+        onClick={() => {setSearchValue('')}}
+      >
+        <Box display="flex" alignItems="center">
+          <Box mr={2}>
+            <UserAvatar
+              username={
+                (option.type == "user") ? option.username :
+                (option.type == "community") ? option._id : ""
+              }
+              imageName={option.avatar}
+              imageWidth={40}
+              link={false}
+            />
+          </Box>
+          <Box>
+            {
+              (option.type == "user") ? option.firstname + " " + option.lastname :
+              (option.type == "community") ? option.name : ""
+            }
+          </Box>
+        </Box>
+      </Link>
+    </>)
   }
 
   useEffect(() => {
@@ -74,37 +140,9 @@ export default function Search() {
       ListboxProps={{
         className: classes.list
       }}
-      getOptionSelected={(option, value) => option.name === value.name}
-      getOptionLabel={(option) => {
-        return option 
-          ? option.firstname + " " + option.lastname + " " + option.username
-          : '';
-      }}
-      renderOption={(option) => (<>
-        <Link
-          to={"/profile/" + option.username}
-          style={{
-            display: 'block',
-            width: '100%',
-            padding: '6px 16px'
-          }}
-          onClick={() => {setSearchValue('')}}
-        >
-          <Box display="flex" alignItems="center">
-            <Box mr={2}>
-              <UserAvatar
-                username={option.username}
-                imageName={option.avatar}
-                imageWidth={40}
-                link={false}
-              />
-            </Box>
-            <Box>
-              {option.firstname} {option.lastname}
-            </Box>
-          </Box>
-        </Link>
-      </>)}
+      getOptionSelected={(option, value) => option._id === value._id}
+      getOptionLabel={optionLabel}
+      renderOption={optionRenderer}
       options={options}
       loading={loading}
       renderInput={(params) => (

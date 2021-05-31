@@ -38,7 +38,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function Index(props) {
+export default function Friends(props) {
   function handleClick (event) {
     setAnchorEl(event.currentTarget);
   }

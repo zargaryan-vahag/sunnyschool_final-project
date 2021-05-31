@@ -664,10 +664,12 @@ export default function Profile(props) {
                             <Box>{postsCount.data}</Box>
                             <Box>posts</Box>
                           </Box>
-                          {/* <Box>
-                            <Box>79</Box>
-                            <Box>comunities</Box>
-                          </Box> */}
+                          <Box>
+                            <Link to={"/communities/" + user.data._id}>
+                              <Box>{user.data.followingCommunitiesCount}</Box>
+                              <Box>comunities</Box>
+                            </Link>
+                          </Box>
                         </Box>
                       </Paper>
                     </Box>

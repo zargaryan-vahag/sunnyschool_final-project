@@ -24,7 +24,7 @@ const useStyles = makeStyles({
   }
 });
 
-export default function UserAvatar({ username, imageName, imageWidth, link, showOnlineStatus }) {
+export default function UserAvatar({ username, imageName, imageWidth, link, showOnlineStatus, linkValue }) {
   const classes = useStyles();
   
   return (
@@ -43,7 +43,7 @@ export default function UserAvatar({ username, imageName, imageWidth, link, show
         alignItems='center'
       >
         {link ? (
-          <Link to={'/profile/' + username}>
+          <Link to={linkValue || '/profile/' + username}>
             <img
               src={[
                 config.BACKEND_PROTOCOL + '://' +
@@ -87,9 +87,10 @@ UserAvatar.defaultProps = {
 }
 
 UserAvatar.propTypes = {
-  username: PropTypes.string.isRequired,
+  username: PropTypes.string,
   imageName: PropTypes.string.isRequired,
   imageWidth: PropTypes.number.isRequired,
   link: PropTypes.bool,
   showOnlineStatus: PropTypes.bool,
+  linkValue: PropTypes.string,
 };

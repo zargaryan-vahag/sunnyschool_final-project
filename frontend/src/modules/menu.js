@@ -40,12 +40,12 @@ const items = [
     link: '/friends',
     icon: SupervisorAccountIcon,
   },
-  // {
-  //   name: 'Communities',
-  //   label: 'Communities',
-  //   link: '/communities',
-  //   icon: PeopleIcon,
-  // },
+  {
+    name: 'Communities',
+    label: 'Communities',
+    link: '/communities',
+    icon: PeopleIcon,
+  },
 ];
 
 const menuStyles = makeStyles({
@@ -99,7 +99,8 @@ export default function Menu(props) {
           key={item.name}
           to={`${item.link}/${
             item.name == 'My profile' ? props.userData.username : 
-            item.name == 'Friends' ? props.userData._id : ''
+            item.name == 'Friends' ? props.userData._id :
+            item.name == 'Communities' ? props.userData._id : ''
           }`}
           color="inherit"
           className={classes.link}

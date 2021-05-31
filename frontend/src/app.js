@@ -17,6 +17,7 @@ import Dialog from './routes/dialog';
 import Dialogs from './routes/dialogs';
 import Friends from './routes/friends';
 import Communities from './routes/communities';
+import Community from './routes/community';
 import Passwordreset from './routes/passreset';
 import Edit from './routes/edit';
 
@@ -73,8 +74,12 @@ export default function App() {
               component={(props) => <Friends {...props} userData={user.data}/>}
             />
             <Route
-              path="/communities"
+              path="/communities/:userId"
               component={(props) => <Communities {...props} userData={user.data}/>}
+            />
+            <Route
+              path="/community/:communityId"
+              component={(props) => <Community {...props} userData={user.data}/>}
             />
             <Route
               path="/edit"

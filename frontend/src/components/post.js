@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import FbImageLibrary from 'react-fb-image-grid';
 import PropTypes from 'prop-types';
+import Moment from 'react-moment';
+import moment from 'moment';
+import Tooltip from '@material-ui/core/Tooltip';
 import { makeStyles } from '@material-ui/core/styles';
 import Box from '@material-ui/core/Box';
 import IconButton from '@material-ui/core/IconButton';
@@ -16,12 +19,14 @@ import config from '../../env.json';
 import UserInputField from './user-input-field';
 import UserMessage from './user-message';
 import AlertDialog from './alert-dialog';
+import Avatar from './user-avatar';
+import Link from './link';
 import { getToken } from '../managers/token-manager';
 import nl2br from '../managers/nl2br';
 
 const baseURL = config.BACKEND_PROTOCOL + '://' + config.BACKEND_HOST + ':' + config.BACKEND_PORT;
 
-const useStyles = makeStyles(({
+const useStyles = makeStyles((theme) => ({
   liked: {
     color: '#FF3347',
     fontWeight: 'bold',
@@ -33,7 +38,10 @@ const useStyles = makeStyles(({
   postButtons: {
     cursor: 'pointer',
     userSelect: 'none'
-  }
+  },
+  date: {
+    color: theme.palette.text.secondary,
+  },
 }));
 
 function PostHeader(props) {
@@ -68,6 +76,7 @@ function PostHeader(props) {
     }
   }
 
+  const classes = useStyles();
   const [anchorEl, setAnchorEl] = useState(null);
   const openMenu = Boolean(anchorEl);
 
@@ -83,8 +92,50 @@ function PostHeader(props) {
       onClose={() => {setOpen(false)}}
     />
     <Box display="flex" justifyContent="space-between" mt={2} mb={2}>
-      <Box display="flex" justifyContent="space-between">
-        <UserMessage {...props} />
+      <Box display="flex" mr={2}>
+        <Box mr={1}>
+          <Avatar
+            imageName={props.postData.community
+              ? props.postData.community.avatar
+              : props.authorData.avatar
+            }
+            imageWidth={props.imageWidth}
+            linkValue={props.postData.community
+              ? '/community/' + props.postData.community._id
+              : '/profile/' + props.authorData.username}
+          />
+        </Box>
+        <Box>
+          <Box
+            display="flex"
+            flexDirection="column"
+            justifyContent="center"
+            height="100%"
+          >
+            <Box textAlign="start">
+              <Link to={props.postData.community
+                ? '/community/' + props.postData.community._id
+                : '/profile/' + props.authorData.username
+              }>
+                {props.postData.community
+                  ? props.postData.community.name
+                  : props.authorData.firstname + " " + props.authorData.lastname}
+              </Link>
+            </Box>
+            <Box className={classes.date} textAlign="start">
+              <Tooltip title={
+                <Moment format="YYYY.MM.DD hh:mm">
+                  {props.postData.createdAt}
+                </Moment>
+              }>
+                {<Moment fromNow>{props.postData.createdAt}</Moment>}
+              </Tooltip>
+            </Box>
+          </Box>
+          <Box>
+            {props.content}
+          </Box>
+        </Box>
       </Box>
       <Box>
         {props.authorData.username == props.userData.username ? (<>
@@ -321,6 +372,13 @@ function PostFooter(props) {
         }}
       />
       <hr />
+      {props.postData.community && (
+        <Box textAlign="start" mb={1}>
+          <Link to={'/profile/' + props.authorData.username}>
+            {props.authorData.firstname} {props.authorData.lastname}
+          </Link>
+        </Box>
+      )}
       <Box display="flex">
         <Box
           mr={2}

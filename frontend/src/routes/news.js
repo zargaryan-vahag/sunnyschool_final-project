@@ -42,7 +42,7 @@ function a11yProps(index) {
   };
 }
 
-export default function Index(props) {
+export default function News(props) {
   async function getNews(page) {
     const Posts = await fetch(
       baseURL + "/posts?page=" + page,
@@ -149,7 +149,7 @@ export default function Index(props) {
                       authorData={post.author}
                       userData={props.userData}
                       postData={post}
-                      imageWidth={40}
+                      imageWidth={60}
                       {...props}
                     />
                   </Paper>
