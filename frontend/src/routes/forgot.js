@@ -8,7 +8,7 @@ import Container from '@material-ui/core/Container';
 import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
 
-import config from '../../env.json';
+import { forgot } from '../api/auth';
 import Header from '../modules/header';
 import Footer from '../modules/footer';
 import AlertDialog from '../components/alert-dialog';
@@ -66,18 +66,8 @@ export default function Forgot() {
             })}
             onSubmit={async (values) => {
               try {
-                let response = await fetch(
-                  `${config.BACKEND_PROTOCOL}://${config.BACKEND_HOST}:${config.BACKEND_PORT}/auth/forgot`,
-                  {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(values),
-                  }
-                );
-                response = await response.json();
-                console.log(response);
+                const response = await forgot(values.email);
+                
                 if (response.success) {
                   setTitle('Success');
                   setText('Email with instructions has been sent');

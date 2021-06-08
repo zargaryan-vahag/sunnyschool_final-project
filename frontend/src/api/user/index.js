@@ -1,0 +1,9 @@
+export { default as getUserById } from './get-user-by-id';
+export { default as getUserByUsername } from './get-user-by-username';
+export { default as getDialogs } from './get-dialogs';
+export { default as editUser } from './edit-user';
+export { default as delUserAvatar } from './del-user-avatar';
+export { default as updateUserAvatar } from './update-user-avatar';
+export { default as postsCount } from './posts-count';
+export { default as friendsCount } from './friends-count';
+export { default as searchUser } from './search-user';

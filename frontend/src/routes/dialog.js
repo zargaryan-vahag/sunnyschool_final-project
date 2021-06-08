@@ -16,8 +16,8 @@ import MoreVertIcon from '@material-ui/icons/MoreVert';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 
-import config from '../../env.json';
-import { getToken } from '../managers/token-manager';
+import config from '../api/config';
+import { getUserById } from '../api/user';
 import nl2br from '../managers/nl2br';
 import { SocketContext } from '../context/socket';
 import Info from '../components/info.js';
@@ -121,7 +121,6 @@ export default function Dialog(props) {
 
   const classes = useStyles();
   const userId = (props.littleWindow) ? props.userId : props.match.params.userId;
-  const baseURL = config.BACKEND_PROTOCOL + "://" + config.BACKEND_HOST + ":" + config.BACKEND_PORT;
   const socket = useContext(SocketContext);
   const scrollElem = useRef();
   
@@ -222,18 +221,7 @@ export default function Dialog(props) {
   }, [dialog]);
 
   useEffect(async () => {
-    const User = await (
-      await fetch(
-        baseURL + "/users/id/" + userId,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            accesstoken: getToken(),
-          },
-        }
-      )
-    ).json();
+    const User = await getUserById(userId);
     setUser(User);
   }, [userId]);
 

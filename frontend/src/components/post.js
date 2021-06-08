@@ -15,16 +15,20 @@ import ChatBubbleIcon from '@material-ui/icons/ChatBubble';
 import CloseIcon from '@material-ui/icons/Close';
 import Button from '@material-ui/core/Button';
 
-import config from '../../env.json';
+import {
+  likePost,
+  delPost,
+  addComment,
+  getComments,
+  delComment,
+} from '../api/post';
+import config from '../api/config';
 import UserInputField from './user-input-field';
 import UserMessage from './user-message';
 import AlertDialog from './alert-dialog';
 import Avatar from './user-avatar';
 import Link from './link';
-import { getToken } from '../managers/token-manager';
 import nl2br from '../managers/nl2br';
-
-const baseURL = config.BACKEND_PROTOCOL + '://' + config.BACKEND_HOST + ':' + config.BACKEND_PORT;
 
 const useStyles = makeStyles((theme) => ({
   liked: {
@@ -53,16 +57,8 @@ function PostHeader(props) {
     setAnchorEl(null);
   }
   
-  async function delPost(id) {
-    let res = await fetch(baseURL + '/posts', {
-      method: "DELETE",
-      headers: {
-        'Content-type': 'application/json',
-        accesstoken: getToken(),
-      },
-      body: JSON.stringify({ postId: id }),
-    });
-    res = await res.json();
+  async function deletePost(id) {
+    const res = await delPost(id);
 
     if (res.success) {
       const elem = document.getElementById(id);
@@ -162,7 +158,7 @@ function PostHeader(props) {
           >
             <MenuItem onClick={() => {
               handleClose();
-              delPost(props.postData._id);
+              deletePost(props.postData._id);
             }}>
               Delete
             </MenuItem>
@@ -182,7 +178,7 @@ function PostBody(props) {
     const arr = file.split(".");
     const extension = arr[arr.length - 1].toUpperCase();
     if (imagesExtensions.includes(extension)) {
-      imagesArr.push(baseURL + '/uploads/' + file);
+      imagesArr.push(config.apiURL() + '/uploads/' + file);
     } else {
       other.push(file);
     }
@@ -209,7 +205,7 @@ function PostBody(props) {
         {other.map((file) => {
           return (
             <p key={file}>
-              <a download href={baseURL + '/uploads/' + file}>
+              <a download href={config.apiURL() + '/uploads/' + file}>
                 {file}
               </a>
             </p>
@@ -222,17 +218,7 @@ function PostBody(props) {
 
 function PostFooter(props) {
   async function like(postId) {
-    const res = await (
-      await fetch(
-        baseURL + '/posts/like/' + postId, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            accesstoken: getToken(),
-          }
-        }
-      )
-    ).json();
+    const res = await likePost(postId);
     
     if (res.data.liked) {
       setLikeClass(classes.liked);
@@ -259,21 +245,10 @@ function PostFooter(props) {
   async function commentHandler(values, resetForm, comments, setComments) {
     if (values.postText == '') return;
     
-    const res = await (
-      await fetch(
-        baseURL + '/posts/comments/' + props.postData._id, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            accesstoken: getToken(),
-          },
-          body: JSON.stringify({
-            text: values.postText,
-            postId: props.postData._id,
-          })
-        }
-      )
-    ).json();
+    const res = await addComment({
+      postId: props.postData._id,
+      text: values.postText,
+    });
 
     if (res.success) {
       resetForm();
@@ -289,35 +264,11 @@ function PostFooter(props) {
     }
   }
 
-  async function getComments(postId, page) {
-    const comms = await fetch(
-      baseURL + '/posts/comments/' + 
-      postId + '?page=' + page,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          accesstoken: getToken(),
-        }
-      }
-    )
-    
-    return comms.json();
-  }
-
-  async function delComment(commentId, postId) {
-    const res = await (
-      await fetch(
-        baseURL + '/posts/comments/' + postId, {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-            accesstoken: getToken(),
-          },
-          body: JSON.stringify({ commentId: commentId })
-        }
-      )
-    ).json();
+  async function deleteComment(commentId, postId) {
+    const res = await delComment({
+      commentId,
+      postId,
+    });
     
     if (res.success) {
       props.postData.comments = res.data.commentsCount;
@@ -330,7 +281,11 @@ function PostFooter(props) {
 
   async function moreComments(e, postId) {
     const button = e.currentTarget;
-    const newComments = await getComments(postId, comments.page + 1);
+    const newComments = await getComments({
+      postId: postId,
+      page: comments.page + 1
+    });
+
     setComments({
       page: comments.page + 1,
       data: [...comments.data, ...newComments.data]
@@ -353,7 +308,10 @@ function PostFooter(props) {
 
   if (props.commentsBlock) {
     useEffect(async () => {
-      const comments = await getComments(props.postData._id, 1);
+      const comments = await getComments({
+        postId: props.postData._id,
+        page: 1,
+      });
       comments.page = 1;
       setComments(comments);
     }, []);
@@ -445,7 +403,7 @@ function PostFooter(props) {
                       {(props.userData._id == comment.userId._id || 
                       props.userData._id == props.postData.author) &&  (
                         <CloseIcon onClick={() => {
-                          delComment(comment._id, props.postData._id)}}
+                          deleteComment(comment._id, props.postData._id)}}
                           style={{
                             cursor: 'pointer'
                           }}

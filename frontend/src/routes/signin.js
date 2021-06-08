@@ -14,7 +14,7 @@ import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
 import Link from '../components/link';
 
-import config from '../../env.json';
+import { signin } from '../api/auth';
 import { setToken } from '../managers/token-manager';
 import Header from '../modules/header';
 import Footer from '../modules/footer';
@@ -68,18 +68,7 @@ export default function SignIn() {
               password: Yup.string().required('Write password'),
             })}
             onSubmit={async (values) => {
-              const response = await (
-                await fetch(
-                  `${config.BACKEND_PROTOCOL}://${config.BACKEND_HOST}:${config.BACKEND_PORT}/auth/signin`,
-                  {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(values),
-                  }
-                )
-              ).json();
+              const response = await signin(values);
 
               if (response.success) {
                 setToken(response.data);

@@ -4,22 +4,17 @@ import StickyBox from "react-sticky-box";
 import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import Box from '@material-ui/core/Box';
-import IconButton from '@material-ui/core/IconButton';
-import Menu from '@material-ui/core/Menu';
-import MenuItem from '@material-ui/core/MenuItem';
-import MoreVertIcon from '@material-ui/icons/MoreVert';
-import CheckIcon from '@material-ui/icons/Check';
 import Paper from '@material-ui/core/Paper';
 import CircularProgress from '@material-ui/core/CircularProgress';
 
-import config from '../../env.json';
+import { getUserById } from '../api/user';
+import { getFriends } from '../api/friend';
 import Header from '../modules/header';
 import Main from '../modules/main';
 import Footer from '../modules/footer';
 import Info from '../components/info.js';
 import Link from '../components/link';
 import UserAvatar from '../components/user-avatar';
-import { getToken } from '../managers/token-manager';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -38,68 +33,8 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function Friends(props) {
-  function handleClick (event) {
-    setAnchorEl(event.currentTarget);
-  }
-
-  function handleClose () {
-    setAnchorEl(null);
-  }
-
-  async function unfriend(e, id) {
-    console.log(e.currentTarget);
-    // const res = await (await fetch(
-    //   baseURL + "/users/unfriend/" + id,
-    //   {
-    //     method: 'DELETE',
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //       accesstoken: getToken(),
-    //     }
-    //   }
-    // )).json();
-    
-    // if (res.success) {   
-      // const friendsList = [];
-      // console.log(id);
-
-      // if (props.match.params.userId == props.userData._id) {
-      //   friends.map((friend) => {
-      //     if (friend._id != id) friendsList.push(friend);
-      //   });
-      // } else {
-      //   friends.map((friend) => {
-      //     if (friend._id == id) {
-      //       friend.isFriend = false;
-      //     }
-      //     friendsList.push(friend);
-      //   });
-      // }
-
-      // setFriends(friendsList);
-    // }
-  }
-
-  async function getFriends(userId, page) {
-    return (await fetch(
-      baseURL + "/users/friends/" + userId + "?page=" + page,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          accesstoken: getToken(),
-        }
-      }
-    )).json();
-  }
-  
+export default function Friends(props) {  
   const classes = useStyles();
-  const baseURL = config.BACKEND_PROTOCOL + "://" + config.BACKEND_HOST + ":" + config.BACKEND_PORT;
-
-  const [anchorEl, setAnchorEl] = useState(null);
-  const openMenu = Boolean(anchorEl);
-
   const [user, setUser] = useState(null);
   const [friends, setFriends] = useState({
     success: false,
@@ -113,7 +48,10 @@ export default function Friends(props) {
 
     if (user && user.success) {
       friends.page++;
-      const newFriends = await getFriends(user.data._id, friends.page);
+      const newFriends = await getFriends({
+        userId: user.data._id,
+        page: friends.page,
+      });
       
       setFriends({
         success: true,
@@ -136,23 +74,15 @@ export default function Friends(props) {
         data: props.userData,
       });
     } else {
-      const User = await (
-        await fetch(
-          baseURL + "/users/id/" + props.match.params.userId,
-          {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              accesstoken: getToken(),
-            },
-          }
-        )
-      ).json();
+      const User = await getUserById(props.match.params.userId);
       userId = User.data._id;
       setUser(User);
     }
 
-    const friends = await getFriends(userId, 1);
+    const friends = await getFriends({
+      userId: userId,
+      page: 1,
+    });
     friends.page = 1;
     
     if (friends.success) {
@@ -207,39 +137,7 @@ export default function Friends(props) {
                                 </Link>
                               </Box>
                               <Box>
-                                {friend.isFriend == true ? (<>
-                                  {/* <IconButton
-                                    aria-label="more"
-                                    aria-controls="long-menu"
-                                    aria-haspopup="true"
-                                    style={{
-                                      padding: '5px',
-                                    }}
-                                    onClick={handleClick}
-                                  > */}
-                                    <CheckIcon />
-                                  {/* </IconButton>
-                                  <Menu
-                                    id="long-menu"
-                                    anchorEl={anchorEl}
-                                    keepMounted
-                                    open={openMenu}
-                                    onClose={handleClose}
-                                    PaperProps={{
-                                      style: {
-                                        maxHeight: 45 * 4.5,
-                                        width: '20ch',
-                                      },
-                                    }}
-                                  >
-                                    <MenuItem id={friend._id} onClick={(e) => {
-                                      handleClose();
-                                      unfriend(e, friend._id);
-                                    }}>
-                                      Unfriend
-                                    </MenuItem>
-                                  </Menu> */}
-                                </>) : null}
+
                               </Box>
                             </Box>
                             <Box>

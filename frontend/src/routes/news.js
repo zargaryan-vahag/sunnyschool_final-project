@@ -7,10 +7,8 @@ import Box from '@material-ui/core/Box';
 import Grid from '@material-ui/core/Grid';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
-import Typography from '@material-ui/core/Typography';
 
-import config from '../../env.json';
-import { getToken } from '../managers/token-manager';
+import { getPosts } from '../api/post';
 import Header from '../modules/header';
 import Main from '../modules/main';
 import Footer from '../modules/footer';
@@ -43,56 +41,32 @@ function a11yProps(index) {
 }
 
 export default function News(props) {
-  async function getNews(page) {
-    const Posts = await fetch(
-      baseURL + "/posts?page=" + page,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          accesstoken: getToken(),
-        },
-      }
-    )
-    return Posts.json();
-  }
-
-  async function getLiked(page) {
-    const Posts = await fetch(
-      baseURL + "/posts/liked?page=" + page,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          accesstoken: getToken(),
-        },
-      }
-    )
-    return Posts.json();
-  }
-
   async function handleChange (event, newValue) {
     setTabValue(newValue);
 
     if (newValue != tabValue) {
+      let newPosts;
       if (newValue == 0) {
-        const newPosts = await getNews(1);
-        setNews({
+        newPosts = await getPosts({
+          news: true,
           page: 1,
-          data: newPosts.data,
         });
       } else if (newValue == 1) {
-        const newPosts = await getLiked(1);
-        setNews({
+        newPosts = await getPosts({
+          liked: true,
           page: 1,
-          data: newPosts.data,
         });
       }
+      
+      setNews({
+        page: 1,
+        data: newPosts.data,
+      });
+      setEnd(false);
     }
   }
 
   const classes = useStyles();
-  const baseURL = config.BACKEND_PROTOCOL + "://" + config.BACKEND_HOST + ":" + config.BACKEND_PORT;
   const [tabValue, setTabValue] = useState(0);
   const [news, setNews] = useState({
     page: 1,
@@ -107,9 +81,15 @@ export default function News(props) {
     let newPosts = {};
 
     if (tabValue == 0) {
-      newPosts = await getNews(news.page);
+      newPosts = await getPosts({
+        news: true,
+        page: news.page,
+      });
     } else {
-      newPosts = await getLiked(news.page);
+      newPosts = await getPosts({
+        liked: true,
+        page: news.page,
+      });
     }
 
     setNews({
@@ -123,7 +103,10 @@ export default function News(props) {
   });
 
   useEffect(async () => {
-    const res = await getNews(1);
+    const res = await getPosts({
+      news: true,
+      page: 1,
+    });
     const news = {};
     news.page = 1;
     news.data = res.data;

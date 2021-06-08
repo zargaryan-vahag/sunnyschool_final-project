@@ -15,7 +15,8 @@ import NotificationsIcon from '@material-ui/icons/Notifications';
 import Badge from '@material-ui/core/Badge';
 import Box from '@material-ui/core/Box';
 
-import config from '../../env.json';
+import { getFriendRequests, getFriendRequestsCount } from '../api/friend';
+import config from '../api/config';
 import { SocketContext } from '../context/socket';
 import Link from '../components/link';
 import UserAvatar from '../components/user-avatar';
@@ -87,18 +88,7 @@ export default function Header(props) {
 
   async function handleNoteClick (event) {
     setAnchorEl(event.currentTarget);
-    const fRequests = await (
-      await fetch(
-        baseURL + "/users/friendrequest/",
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            accesstoken: getToken(),
-          }
-        }
-      )
-    ).json();
+    const fRequests = await getFriendRequests();
     setNotes(fRequests.data);
   }
 
@@ -193,18 +183,7 @@ export default function Header(props) {
 
   useEffect(async () => {
     if (props.userData) {
-      const fRequestCount = await (
-        await fetch(
-          baseURL + "/users/friendrequestcount/",
-          {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              accesstoken: getToken(),
-            }
-          }
-        )
-      ).json();
+      const fRequestCount = await getFriendRequestsCount();
       setNoteCount(fRequestCount.data);
     }
   }, []);

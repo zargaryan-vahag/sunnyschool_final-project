@@ -5,8 +5,8 @@ import Autocomplete from '@material-ui/lab/Autocomplete';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Box from '@material-ui/core/Box';
 
-import config from '../../env.json';
-import { getToken } from '../managers/token-manager';
+import { searchUser } from '../api/user';
+import { searchCommunity } from '../api/community';
 import UserAvatar from './user-avatar';
 import Link from './link';
 
@@ -25,39 +25,18 @@ export default function Search() {
   const [options, setOptions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchValue, setSearchValue] = useState('');
-  const baseURL = config.BACKEND_PROTOCOL + "://" + config.BACKEND_HOST + ":" + config.BACKEND_PORT;
-
+  
   async function search(q) {
     if (loading) return;
     setLoading(true);
 
     if (q != '') {
-      let response = await fetch(
-        baseURL + '/users?q=' + q,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            accesstoken: getToken(),
-          }
-        }
-      );
-      const users = await response.json();
+      const users = await searchUser(q);
       users.data.forEach((user) => {
         user.type = "user";
       });
-
-      response = await fetch(
-        baseURL + '/communities?q=' + q,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            accesstoken: getToken(),
-          }
-        }
-      );
-      const communities = await response.json();
+      
+      const communities = await searchCommunity(q);
       communities.data.forEach((community) => {
         community.type = "community";
       });

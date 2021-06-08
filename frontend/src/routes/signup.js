@@ -13,10 +13,10 @@ import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
 import Link from '../components/link';
 
+import { signup } from '../api/auth';
 import AlertDialog from '../components/alert-dialog';
 import Header from '../modules/header';
 import Footer from '../modules/footer';
-import config from '../../env.json';
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -112,23 +112,11 @@ export default function SignUp() {
               }),
             })}
             onSubmit={async (values) => {
-              let response = await fetch(
-                `${config.BACKEND_PROTOCOL}://${config.BACKEND_HOST}:${config.BACKEND_PORT}/auth/signup`,
-                {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify(values),
-                }
-              );
-              response = await response.json();
+              const response = await signup(values);
 
               if (response.success) {
                 setTitle('Success');
-                setText(
-                  'You have successfuly registered, check your mail to verify your account'
-                );
+                setText('You have successfuly registered, check your mail to verify your account');
               } else {
                 setTitle('Fail');
                 setText(response.message);

@@ -8,16 +8,24 @@ import Paper from '@material-ui/core/Paper';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Button from '@material-ui/core/Button';
 
-import config from '../../env.json';
-import { getToken } from '../managers/token-manager';
+import {
+  getCommunity,
+  toggleFollowCommunity,
+  delCommunityAvatar,
+  updateCommunityAvatar,
+  getFollowStatus
+} from '../api/community';
+import {
+  addPost,
+  getPosts
+} from '../api/post';
+import { apiURL } from '../api/config';
 import Header from '../modules/header';
 import Main from '../modules/main';
 import Footer from '../modules/footer';
 import paginator from '../managers/paginator';
 import AlertDialog from '../components/alert-dialog';
 import Info from '../components/info.js';
-import Link from '../components/link';
-import Avatar from '../components/user-avatar';
 import UserInputField from '../components/user-input-field';
 import Post from '../components/post';
 import ImageForm from '../components/image-input-form';
@@ -58,7 +66,6 @@ const useStyles = makeStyles((theme) => ({
 
 export default function Communities(props) {
   const classes = useStyles();
-  const baseURL = config.BACKEND_PROTOCOL + "://" + config.BACKEND_HOST + ":" + config.BACKEND_PORT;
   const [community, setCommunity] = useState({});
   const [posts, setPosts] = useState({
     success: false,
@@ -72,7 +79,10 @@ export default function Communities(props) {
 
   paginator(async (setEnd) => {
     posts.page++;
-    const newPosts = await getPosts(props.match.params.communityId, posts.page);
+    const newPosts = await getPosts({
+      communityId: props.match.params.communityId,
+      page: posts.page,
+    });
     setPosts({
       success: true,
       page: posts.page,
@@ -81,51 +91,9 @@ export default function Communities(props) {
 
     setEnd(newPosts.data.length == 0);
   });
-  
-  async function getCommunity(communityId) {
-    return (await fetch(baseURL + '/communities/' + communityId, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        accessToken: getToken(),
-      }
-    })).json();
-  }
-
-  async function getPosts(communityId, page) {
-    return (await fetch(
-      baseURL + '/communities/posts/' + communityId + '?page=' + page,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          accessToken: getToken(),
-        }
-      }
-    )).json();
-  }
-
-  async function getFollowStatus(communityId) {
-    return (await fetch(
-      baseURL + '/communities/isfollower/' + communityId,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          accessToken: getToken(),
-        }
-      }
-    )).json();
-  }
 
   async function toggleFollow(community) {
-    const result = await (await fetch(baseURL + '/communities/togglefollow/' + community.data._id, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        accessToken: getToken(),
-      }
-    })).json();
+    const result = await toggleFollowCommunity(community.data._id);
 
     if (result.message == "followed") {
       community.data.isFollowed = true;
@@ -138,29 +106,16 @@ export default function Communities(props) {
     });
   }
 
-  async function postHandler(values, cb) {
-    const formData = new FormData();
-    formData.append('postText', values.postText);
-    formData.append('communityId', community.data._id);
-    for (let file of values.files) {
-      formData.append('files', file);
-    }
-
+  async function postHandler(values, clearForm) {
     try {
-      let res = await fetch(
-        baseURL + "/posts",
-        {
-          method: 'POST',
-          headers: {
-            accesstoken: getToken(),
-          },
-          body: formData,
-        }
-      );
-      res = await res.json();
+      const res = await addPost({
+        files: values.files,
+        postText: values.postText,
+        communityId: community.data._id,
+      });
 
       if (res.success) {
-        cb();
+        clearForm();
         setPosts({
           success: true,
           data: [res.data, ...posts.data],
@@ -186,19 +141,7 @@ export default function Communities(props) {
       setComponent(<ImageForm onSubmit={onAvatarSubmit} />);
       setOpen(true);
     } else if (options.action == "delete") {
-      const res = await (await fetch(
-        baseURL + "/communities/avatar",
-        {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-            accesstoken: getToken(),
-          },
-          body: JSON.stringify({
-            communityId: props.match.params.communityId,
-          }),
-        }
-      )).json();
+      const res = await delCommunityAvatar(props.match.params.communityId);
 
       if (res.success) {
         setTitle('Success');
@@ -215,22 +158,11 @@ export default function Communities(props) {
   }
 
   async function onAvatarSubmit(values) {
-    if (values.file[0]) {
-      const formData = new FormData();
-      formData.append('file', values.file[0]);
-      formData.append('communityId', props.match.params.communityId);
-  
-      let res = await fetch(
-        baseURL + "/communities/avatar",
-        {
-          method: 'PATCH',
-          headers: {
-            accesstoken: getToken(),
-          },
-          body: formData,
-        }
-      );
-      res = await res.json();
+    if (values.file[0]) {  
+      const res = await updateCommunityAvatar({
+        avatar: values.file[0],
+        communityId: props.match.params.communityId,
+      });
 
       if (res.success) {
         setTitle('Success');
@@ -247,7 +179,10 @@ export default function Communities(props) {
 
   useEffect(async () => {
     const community = await getCommunity(props.match.params.communityId);
-    const psts = await getPosts(props.match.params.communityId, posts.page);
+    const psts = await getPosts({
+      communityId: props.match.params.communityId,
+      page: posts.page,
+    });
 
     if (psts.success) {
       setPosts({
@@ -360,7 +295,7 @@ export default function Communities(props) {
                                 </>
                               );
                             } : () => {}}
-                            images={[baseURL + "/uploads/" + community.data.avatar]}
+                            images={[apiURL() + "/uploads/" + community.data.avatar]}
                           />
                         </Box>
                         <Box>

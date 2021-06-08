@@ -9,7 +9,7 @@ import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import MoreHorizIcon from '@material-ui/icons/MoreHoriz'; 
 
-import config from '../../env.json';
+import { getCommunities, toggleFollowCommunity } from '../api/community';
 import Header from '../modules/header';
 import Main from '../modules/main';
 import Footer from '../modules/footer';
@@ -17,7 +17,6 @@ import paginator from '../managers/paginator';
 import Info from '../components/info.js';
 import Link from '../components/link';
 import Avatar from '../components/user-avatar';
-import { getToken } from '../managers/token-manager';
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -75,7 +74,6 @@ function CommunityActions({ community, onToggleFollow }) {
 
 export default function Communities(props) {
   const classes = useStyles();
-  const baseURL = config.BACKEND_PROTOCOL + "://" + config.BACKEND_HOST + ":" + config.BACKEND_PORT;
   const [communities, setCommunities] = useState({
     success: false,
     page: 1,
@@ -84,7 +82,10 @@ export default function Communities(props) {
 
   paginator(async (setEnd) => {
     communities.page++;
-    const newCommunities = await getCommunities(communities.page);
+    const newCommunities = await getCommunities({
+      userId: props.match.params.userId,
+      page: communities.page,
+    });
     setCommunities({
       success: true,
       page: communities.page,
@@ -94,27 +95,8 @@ export default function Communities(props) {
     setEnd(newCommunities.data.length == 0);
   });
 
-  async function getCommunities(page) {
-    return (await fetch(
-      baseURL + '/communities/userfollowing/' + props.match.params.userId + '?page=' + page,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          accessToken: getToken(),
-        }
-      }
-    )).json();
-  }
-
   async function toggleFollow(community) {
-    const result = await (await fetch(baseURL + '/communities/togglefollow/' + community._id, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        accessToken: getToken(),
-      }
-    })).json();
+    const result = await toggleFollowCommunity(community._id);
 
     if (result.message == "followed") {
       community.isFollowed = true;
@@ -124,7 +106,10 @@ export default function Communities(props) {
   }
 
   useEffect(async () => {
-    const comms = await getCommunities(communities.page);
+    const comms = await getCommunities({
+      userId: props.match.params.userId,
+      page: communities.page,
+    });
     if (comms.success) {
       setCommunities({
         success: true,

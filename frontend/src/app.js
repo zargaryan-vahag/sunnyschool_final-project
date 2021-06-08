@@ -22,14 +22,14 @@ import Passwordreset from './routes/passreset';
 import Edit from './routes/edit';
 
 import './css/global-styles.css';
-import authHandler from './managers/auth-handler';
+import { authuser } from './api/auth';
 import Chat from './modules/chat';
 
 import { SocketContext, socket } from './context/socket';
 
 export default function App() {
   async function getUser() {
-    const user = await authHandler();
+    const user = await authuser();
     setUser(user);
   }
 

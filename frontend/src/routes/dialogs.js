@@ -11,8 +11,7 @@ import { Box } from '@material-ui/core';
 import Paper from '@material-ui/core/Paper';
 import FiberManualRecordIcon from '@material-ui/icons/FiberManualRecord';
 
-import config from '../../env.json';
-import { getToken } from '../managers/token-manager';
+import { getDialogs } from '../api/user';
 import { SocketContext } from '../context/socket';
 import UserAvatar from '../components/user-avatar';
 
@@ -38,7 +37,6 @@ const useStyles = makeStyles((theme) => ({
 
 export default function Dialogs(props) {
   const classes = useStyles();
-  const baseURL = config.BACKEND_PROTOCOL + "://" + config.BACKEND_HOST + ":" + config.BACKEND_PORT;
   const socket = useContext(SocketContext);
 
   const [dialogs, setDialogs] = useState(null);
@@ -74,18 +72,7 @@ export default function Dialogs(props) {
   }, [dialogs]);
 
   useEffect(async () => {
-    const Dialogs = await (
-      await fetch(
-        baseURL + "/dialogs",
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            accesstoken: getToken(),
-          },
-        }
-      )
-    ).json();
+    const Dialogs = await getDialogs();
     setDialogs(Dialogs.data);
   }, []);
 

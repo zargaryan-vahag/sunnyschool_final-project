@@ -11,8 +11,7 @@ import Select from '@material-ui/core/Select';
 import Box from '@material-ui/core/Box';
 import Paper from '@material-ui/core/Paper';
 
-import config from '../../env.json';
-import { getToken } from '../managers/token-manager';
+import { editUser } from '../api/user';
 import birthday from '../managers/birthday';
 import Header from '../modules/header';
 import Main from '../modules/main';
@@ -39,7 +38,6 @@ const useStyles = makeStyles((theme) => ({
 
 export default function Edit(props) {
   const classes = useStyles();
-  const baseURL = config.BACKEND_PROTOCOL + "://" + config.BACKEND_HOST + ":" + config.BACKEND_PORT;
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [text, setText] = useState('');
@@ -97,16 +95,7 @@ export default function Edit(props) {
                   .max(2, 'invalid gender')
               })}
               onSubmit={async (values) => {
-                const response = await (
-                  await fetch(baseURL + '/users', {
-                    method: 'PATCH',
-                    headers: {
-                      'Content-Type': 'application/json',
-                      accesstoken: getToken(),
-                    },
-                    body: JSON.stringify(values),
-                  })
-                ).json();
+                const response = await editUser(values);
 
                 if (response.success) {
                   setTitle('Success');

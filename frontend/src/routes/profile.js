@@ -14,6 +14,24 @@ import IconButton from '@material-ui/core/IconButton';
 import AttachFileIcon from '@material-ui/icons/AttachFile';
 
 import config from '../../env.json';
+import {
+  sendFriendRequest,
+  refuseFriendRequest,
+  unfriend as unfriendUser,
+  checkFriend,
+  getFriendRequest
+} from '../api/friend';
+import {
+  getPosts,
+  addPost
+} from '../api/post';
+import {
+  getUserByUsername,
+  updateUserAvatar,
+  delUserAvatar,
+  postsCount as userPostsCount,
+  friendsCount as userFriendsCount
+} from '../api/user';
 import { SocketContext } from '../context/socket';
 import Link from '../components/link';
 import Info from '../components/info.js';
@@ -66,28 +84,15 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default function Profile(props) {
-  async function postHandler(data, cb) {
-    const formData = new FormData();
-    formData.append('postText', data.postText);
-    for (let file of data.files) {
-      formData.append('files', file);
-    }
-
+  async function postHandler(data, clearForm) {
     try {
-      let res = await fetch(
-        baseURL + "/posts",
-        {
-          method: 'POST',
-          headers: {
-            accesstoken: getToken(),
-          },
-          body: formData,
-        }
-      );
-      res = await res.json();
+      const res = await addPost({
+        files: data.files,
+        postText: data.postText,
+      });
 
       if (res.success) {
-        cb();
+        clearForm();
         setNewPost(!newPost);
       } else {
         throw new Error(res.message);
@@ -98,21 +103,6 @@ export default function Profile(props) {
       setComponent(<></>);
       setOpen(true);
     }
-  }
-
-  async function getPosts(userId, page) {
-    const Posts = await fetch(
-      baseURL + "/posts/user/" +
-      userId + "?action=posts&page=" + page,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          accesstoken: getToken(),
-        },
-      }
-    )
-    return Posts.json();
   }
 
   async function updateAvatarModal(e, options) {
@@ -127,20 +117,7 @@ export default function Profile(props) {
           }}
           onSubmit={async (values) => {
             if (values.file[0]) {
-              const formData = new FormData();
-              formData.append('file', values.file[0]);
-          
-              let res = await fetch(
-                baseURL + "/users/avatar",
-                {
-                  method: 'PATCH',
-                  headers: {
-                    accesstoken: getToken(),
-                  },
-                  body: formData,
-                }
-              );
-              res = await res.json();
+              const res = await updateUserAvatar(values.file[0]);
         
               if (res.success) {
                 setTitle('Success');
@@ -223,43 +200,22 @@ export default function Profile(props) {
       </>);
       setOpen(true);
     } else if (options.action == "delete") {
-      const res = await (await fetch(
-        baseURL + "/users/avatar",
-        {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-            accesstoken: getToken(),
-          },
-        }
-      )).json();
+      const res = await delUserAvatar();
 
       if (res.success) {
         setTitle('Success');
-        setText(res.message);
-        setComponent(<></>);
         props.userData.avatar = res.data.avatar;
       } else {
         setTitle('Error');
-        setText(res.message);
-        setComponent(<></>);
       }
+      setText(res.message);
+      setComponent(<></>);
       setOpen(true);
     }
   }
 
   async function friendRequest(userId) {
-    const res = await (await fetch(
-      baseURL + "/users/friendrequest",
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          accesstoken: getToken(),
-        },
-        body: JSON.stringify({ to: userId })
-      }
-    )).json();
+    const res = await sendFriendRequest(userId);
     
     if (res.success) {
       if (res.data.accepted) {
@@ -280,16 +236,7 @@ export default function Profile(props) {
   }
 
   async function unfriend(userId) {
-    const res = await (await fetch(
-      baseURL + "/users/unfriend/" + userId,
-      {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          accesstoken: getToken(),
-        }
-      }
-    )).json();
+    const res = await unfriendUser(userId);
     
     if (res.success) {
       setIsFriend(false);
@@ -304,16 +251,7 @@ export default function Profile(props) {
   }
 
   async function refuse(userId) {
-    const res = await (await fetch(
-      baseURL + "/users/refusefriend/" + userId,
-      {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          accesstoken: getToken(),
-        }
-      }
-    )).json();
+    const res = await refuseFriendRequest(userId);
     
     if (res.success) {
       setIsFriend(false);
@@ -360,91 +298,32 @@ export default function Profile(props) {
         data: props.userData,
       });
     } else {
-      const User = await (
-        await fetch(
-          baseURL + "/users/username/" + props.match.params.username,
-          {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              accesstoken: getToken(),
-            },
-          }
-        )
-      ).json();
+      const User = await getUserByUsername(props.match.params.username);
       userId = User.data._id;
       setUser(User);
     }
     
-    const Posts = await getPosts(userId, 1);
+    const Posts = await getPosts({
+      userId: userId,
+      page: 1,
+    });
     Posts.page = 1;
     setPosts(Posts);
 
-    const postsCount = await (
-      await fetch(
-        baseURL + "/posts/user/" +
-        userId + "?action=postsCount",
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            accesstoken: getToken(),
-          }
-        }
-      )
-    ).json();
+    const postsCount = await userPostsCount(userId);
     setPostsCount(postsCount);
 
-    const friendsCount = await (
-      await fetch(
-        baseURL + "/users/friendscount/" + userId,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            accesstoken: getToken(),
-          }
-        }
-      )
-    ).json();
+    const friendsCount = await userFriendsCount(userId);
     setFriendsCount(friendsCount);
 
-    const friendCheck = await (
-      await fetch(
-        baseURL + "/users/isfriend/" + userId,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            accesstoken: getToken(),
-          }
-        }
-      )
-    ).json();
-    
-    if (friendCheck.success) {
-      setIsFriend(friendCheck.data[0].isFriend);
-    }
+    const friendCheck = await checkFriend(userId);
+    setIsFriend(friendCheck.data[0].isFriend);
 
     if (!friendCheck.data[0].isFriend) {
-      const fRequest = await (
-        await fetch(
-          baseURL + "/users/friendrequest/" + userId,
-          {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              accesstoken: getToken(),
-            }
-          }
-        )
-      ).json();
-
-      if (fRequest.success) {
-        if (fRequest.data.sent) {
-          setRequestSentFrom(fRequest.data.from)
-          setRequestSent(true);
-        }
+      const fRequest = await getFriendRequest(userId);
+      if (fRequest.success && fRequest.data.sent) {
+        setRequestSentFrom(fRequest.data.from)
+        setRequestSent(true);
       }
     }
   }, [props.match.params.username, newPost]);
@@ -472,7 +351,10 @@ export default function Profile(props) {
 
     if (user && user.success) {
       posts.page++;
-      const newPosts = await getPosts(user.data._id, posts.page);
+      const newPosts = await getPosts({
+        userId: user.data._id,
+        page: posts.page,
+      });
       setPosts({
         success: true,
         data: [...posts.data, ...newPosts.data],
@@ -667,7 +549,7 @@ export default function Profile(props) {
                           <Box>
                             <Link to={"/communities/" + user.data._id}>
                               <Box>{user.data.followingCommunitiesCount}</Box>
-                              <Box>comunities</Box>
+                              <Box>communities</Box>
                             </Link>
                           </Box>
                         </Box>

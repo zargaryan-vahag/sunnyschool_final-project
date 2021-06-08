@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import MuiAlert from '@material-ui/lab/Alert';
 // import Link from '@material-ui/core/Link';
 import Link from '../components/link';
 
+import { verify as verifyAccount } from '../api/auth';
 import Info from '../components/info.js';
-import config from '../../env.json';
 
 export default function Verify() {
   async function verify() {
@@ -13,29 +13,16 @@ export default function Verify() {
     const token = params.get('token');
     let response;
     if (token) {
-      response = await (
-        await fetch(
-          `${config.BACKEND_PROTOCOL}://${config.BACKEND_HOST}:${config.BACKEND_PORT}/auth/verify`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              verifyToken: token,
-            }),
-          }
-        )
-      ).json();
+      response = await verifyAccount(token);
     }
     setVerifyInfo(response);
   }
 
-  const [verifyInfo, setVerifyInfo] = React.useState(null);
+  const [verifyInfo, setVerifyInfo] = useState(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     verify();
-  }, [setVerifyInfo]);
+  }, []);
 
   if (verifyInfo) {
     if (verifyInfo.success) {
