@@ -13,7 +13,7 @@ import Button from '@material-ui/core/Button';
 import IconButton from '@material-ui/core/IconButton';
 import AttachFileIcon from '@material-ui/icons/AttachFile';
 
-import config from '../../env.json';
+import { apiURL } from '../api/config';
 import {
   sendFriendRequest,
   refuseFriendRequest,
@@ -266,7 +266,6 @@ export default function Profile(props) {
   }
 
   const classes = useStyles();
-  const baseURL = config.BACKEND_PROTOCOL + "://" + config.BACKEND_HOST + ":" + config.BACKEND_PORT;
   const socket = useContext(SocketContext);
   const avatarExtensions = ['PNG', 'JPG', 'JPEG', 'GIF'];
   const genderList = ['Not selected', 'Male', 'Female']
@@ -412,8 +411,7 @@ export default function Profile(props) {
                                 );
                               } : () => {}}
                               images={[
-                                baseURL + "/uploads/" + 
-                                user.data.avatar
+                                apiURL() + "/uploads/" + user.data.avatar
                               ]}
                             />
                           </Box>
