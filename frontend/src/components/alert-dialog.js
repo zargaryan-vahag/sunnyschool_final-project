@@ -18,7 +18,9 @@ export default function AlertDialog(props) {
           zIndex: '900',
         }}
       >
-        <DialogTitle id="alert-dialog-title">{props.dialogTitle}</DialogTitle>
+        {props.dialogTitle && (
+          <DialogTitle id="alert-dialog-title">{props.dialogTitle}</DialogTitle>
+        )}
         <DialogContent>
           {props.component}
           <DialogContentText id="alert-dialog-description">

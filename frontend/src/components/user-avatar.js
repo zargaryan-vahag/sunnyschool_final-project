@@ -24,7 +24,31 @@ const useStyles = makeStyles({
   }
 });
 
-export default function UserAvatar({ username, imageName, imageWidth, link, showOnlineStatus, linkValue }) {
+function Img({ imageName }) {
+  return (
+    <img
+      src={[
+        config.BACKEND_PROTOCOL + '://' +
+        config.BACKEND_HOST + ':' +
+        config.BACKEND_PORT + '/uploads/' +
+        imageName
+      ]}
+      style={{
+        width: '100%',
+      }}
+    />
+  );
+}
+
+export default function UserAvatar({
+  username,
+  imageName,
+  imageWidth,
+  link,
+  showOnlineStatus,
+  linkValue,
+  border
+}) {
   const classes = useStyles();
   
   return (
@@ -41,33 +65,16 @@ export default function UserAvatar({ username, imageName, imageWidth, link, show
         display='flex'
         justifyContent='center'
         alignItems='center'
+        style={{
+          border: border ? 'solid 1px #e6e6e6' : '',
+        }}
       >
         {link ? (
           <Link to={linkValue || '/profile/' + username}>
-            <img
-              src={[
-                config.BACKEND_PROTOCOL + '://' +
-                config.BACKEND_HOST + ':' +
-                config.BACKEND_PORT + '/uploads/' +
-                imageName
-              ]}
-              style={{
-                width: '100%',
-              }}
-            />
+            <Img imageName={imageName}/>
           </Link>
         ) : (
-          <img
-            src={[
-              config.BACKEND_PROTOCOL + '://' +
-              config.BACKEND_HOST + ':' +
-              config.BACKEND_PORT + '/uploads/' +
-              imageName
-            ]}
-            style={{
-              width: '100%',
-            }}
-          />
+          <Img imageName={imageName}/>
         )}
       </Box>
       {showOnlineStatus && (
@@ -84,6 +91,7 @@ export default function UserAvatar({ username, imageName, imageWidth, link, show
 UserAvatar.defaultProps = {
   link: true,
   showOnlineStatus: false,
+  border: true,
 }
 
 UserAvatar.propTypes = {
@@ -93,4 +101,5 @@ UserAvatar.propTypes = {
   link: PropTypes.bool,
   showOnlineStatus: PropTypes.bool,
   linkValue: PropTypes.string,
+  border: PropTypes.bool,
 };

@@ -146,38 +146,33 @@ export default function UserInputField(props) {
                   imageWidth={40}
                 />
               </Box>
-              <Box display="flex" alignItems="flex-end" height="100%">
-                <Box mb={5} width="100%" display="flex" justifyContent="center">
-                  {props.fileInput && (
-                    <>
-                      <IconButton style={{
-                        padding: '0',
+              {props.fileInput && (
+                <Box display="flex" alignItems="flex-end" height="100%">
+                  <Box mb={5} width="100%" display="flex" justifyContent="center">
+                    <IconButton style={{
+                      padding: '0',
+                    }}>
+                      <label htmlFor="files" style={{
+                        width: '25px',
+                        height: '25px',
+                        margin: '0px',
                       }}>
-                        <label htmlFor="files" style={{
-                          width: '25px',
-                          height: '25px',
-                          margin: '0px',
-                        }}>
-                          <AttachFileIcon className={classes.fileIcon}/>
-                        </label>
-                      </IconButton>
-                      <input
-                        multiple
-                        id="files"
-                        name="files"
-                        type="file"
-                        style={{ display: 'none' }}
-                        onChange={(event) => {
-                          setFieldValue(
-                            'files',
-                            Array.prototype.slice.call(event.currentTarget.files, 0, 10)
-                          );
-                        }}
-                      />
-                    </>
-                  )}
+                        <AttachFileIcon className={classes.fileIcon}/>
+                      </label>
+                    </IconButton>
+                    <input
+                      multiple
+                      id="files"
+                      name="files"
+                      type="file"
+                      style={{ display: 'none' }}
+                      onChange={(event) => {
+                        setFieldValue('files', Array.prototype.slice.call([...event.currentTarget.files, ...values.files], 0, 10));
+                      }}
+                    />
+                  </Box>
                 </Box>
-              </Box>
+              )}
             </Grid>
             <Grid item xs={10} style={{maxWidth: 'inherit'}}>
               <Box ml={1} mr={1}>
@@ -219,8 +214,17 @@ export default function UserInputField(props) {
                   onClick={toggleEmojiBox}
                 />
               </Box>
-              <Box display="flex" alignItems={props.fileInput ? "flex-end" : ''} height="100%">
-                <Box mb={4} width="100%" display="flex" justifyContent="center">
+              <Box
+                display="flex"
+                alignItems={props.fileInput ? "flex-end" : ''}
+                height={props.fileInput ? '100%' : '95%'}
+              >
+                <Box
+                  mb={4}
+                  width="100%"
+                  display="flex"
+                  justifyContent="center"
+                >
                   <Button
                     type="submit"
                     variant="contained"
@@ -238,7 +242,13 @@ export default function UserInputField(props) {
           <Grid item xs={12}>
             {props.fileInput && (
               <Box mr={1} ml={1}>
-                <Thumb files={values.files} />
+                <Thumb
+                  files={values.files}
+                  onDelete={(index) => {
+                    values.files.splice(index, 1);
+                    setFieldValue('files', values.files);
+                  }}
+                />
               </Box>
             )}
           </Grid>

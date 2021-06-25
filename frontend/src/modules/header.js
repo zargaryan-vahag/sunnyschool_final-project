@@ -283,6 +283,7 @@ export default function Header(props) {
                         imageName={props.userData.avatar}
                         imageWidth={40}
                         link={false}
+                        border={false}
                       />
                       <ExpandMoreIcon />
                     </Button>
