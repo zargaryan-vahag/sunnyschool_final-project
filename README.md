@@ -3,7 +3,9 @@
 
 ## Description
 Simple social network example
-node version - v12.6.0
+
+### Versions
+node - v12.6.0
 
 ## Table of Contents
 * [Installation](#installation)
