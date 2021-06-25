@@ -1,21 +1,26 @@
 const AppError = require('../managers/app-error');
+const errorMiddleware = require('../middlewares/error');
 const TokenManager = require('../managers/token-manager');
 
-module.exports = async (req, res, next) => {
-  const token = req.headers.accesstoken || req.query.accessToken || req.body.accessToken;
-  if (token) {
+module.exports = (options = { ignoreError: false }) => {
+  return async (req, res, next) => {
+    const token = req.headers.accesstoken || req.query.accessToken || req.body.accessToken;
+
     try {
-      const userData = await TokenManager.decode(token);
-      if (userData.userId) {
-        req.userData = userData;
-        next();
-      } else {
-        return res.onError(new AppError('Auth error', 401));
+      if (!token) {
+        throw AppError.unauthorized();
       }
+      const userData = await TokenManager.decode(token);
+      if (!userData.userId) {
+        throw AppError.unauthorized();
+      }
+      
+      req.userData = userData;
+      next();
     } catch (e) {
-      return res.onError(new AppError('Token not provided', 401));
+      if (!options.ignoreError) {
+        errorMiddleware(e, req, res);
+      }
     }
-  } else {
-    return res.onError(new AppError('Token not provided', 401));
-  }
+  };
 };

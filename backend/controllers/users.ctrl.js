@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const User = require('../models/user');
 const FRequestCtrl = require('./friend-request.ctrl');
+const AppError = require('../managers/app-error');
 
 class UsersCtrl {
   static getById(id) {
@@ -42,7 +43,7 @@ class UsersCtrl {
     ]);
     
     if (check[0][0].isFriend && check[1][0].isFriend) {
-      throw new Error("User is already in friendlist");
+      throw AppError.badRequest("User is already in friendlist");
     } else {
       return FRequestCtrl.add(params);
     }

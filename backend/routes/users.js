@@ -12,9 +12,10 @@ const AppError = require('../managers/app-error');
 
 router.route('/')
   .get(
-    isLoggedIn,
+    isLoggedIn(),
     query('q').exists(),
-    async (req, res) => {
+    validationResult,
+    async (req, res, next) => {
       try {
         const users = await UsersCtrl.find({
           $or: [
@@ -25,12 +26,11 @@ router.route('/')
         });
         res.onSuccess(users, "");
       } catch (e) {
-        res.onError(new AppError(e.message, 400));
+        next(e);
       }
-    }
-  )
+    })
   .patch(
-    isLoggedIn,
+    isLoggedIn(),
     body('firstname', 'Invalid firstname')
       .exists()
       .isLength({ min: 2, max: 32 }).bail()
@@ -46,7 +46,7 @@ router.route('/')
       .exists()
       .isFloat({ min: 0, max: 2 }),
     validationResult,
-    async (req, res) => {
+    async (req, res, next) => {
       try {
         if (!req.body.birthday) {
           req.body.birthday = null;
@@ -60,96 +60,88 @@ router.route('/')
         });
         res.onSuccess({}, "User updated");
       } catch (e) {
-        res.onError(new AppError(e.message));
+        next(e);
       }
-    }
-  )
+    });
 
 router.route('/id/:id')
   .get(
-    isLoggedIn,
-    async (req, res) => {
+    isLoggedIn(),
+    async (req, res, next) => {
       try {
         const user = await UsersCtrl.getById(req.params.id);
-
-        if (user) {
-          const friendCheck = await UsersCtrl.checkFriend(req.userData.userId, user._id);
-          const u = user.toObject();
-          u.isFriend = friendCheck[0].isFriend;
-          res.onSuccess(u);
-        } else {
-          throw new Error('User not found');
+        if (!user) {
+          throw AppError.notFound('User not found');
         }
+
+        const friendCheck = await UsersCtrl.checkFriend(req.userData.userId, user._id);
+        const u = user.toObject();
+        u.isFriend = friendCheck[0].isFriend;
+        res.onSuccess(u);
       } catch (e) {
-        res.onError(new AppError(e.message, 404));
+        next(e);
       }
     });
 
 router.route('/username/:username')
   .get(
-    isLoggedIn,
-    async (req, res) => {
+    isLoggedIn(),
+    async (req, res, next) => {
       try {
         const user = await UsersCtrl.findOne({username: req.params.username});
-
-        if (user) {
-          const friendCheck = await UsersCtrl.checkFriend(req.userData.userId, user._id);
-          const u = user.toObject();
-          u.isFriend = friendCheck[0].isFriend;
-          res.onSuccess(u);
-        } else {
-          throw new Error('User not found');
+        if (!user) {
+          throw AppError.notFound('User not found');
         }
+
+        const friendCheck = await UsersCtrl.checkFriend(req.userData.userId, user._id);
+        const u = user.toObject();
+        u.isFriend = friendCheck[0].isFriend;
+        res.onSuccess(u);
       } catch (e) {
-        res.onError(new AppError(e.message, 404));
+        next(e);
       }
     });
 
 router.route('/avatar')
   .patch(
     upload.single('file'),
-    async (req, res) => {
+    isLoggedIn({ ignoreError: true }),
+    async (req, res, next) => {
       try {
         const avatarExtensions = ['PNG', 'JPG', 'JPEG', 'GIF'];
-        const loggedIn = await isLoggedIn(req, {onError() {
-          return false;
-        }}, () => {});
 
-        if (loggedIn !== false) {
-          if (!req.file) {
-            throw new Error("Image not uploaded");
-          }
-          
-          if (!avatarExtensions.includes(req.file.mimetype.split('/')[1].toUpperCase())) {
-            throw new Error("Unsupported file type");
-          }
-
-          const user = await UsersCtrl.getById(req.userData.userId);
-
-          if (!user) {
-            throw new Error("User not found");
-          }
-
-          const oldAvatar = user.avatar;
-          await UsersCtrl.findOneAndUpdate({ _id: req.userData.userId }, { avatar: req.file.filename });
-          if (oldAvatar != "default_avatar.png") {
-            await fs.promises.unlink(__homedir + '/public/uploads/' + oldAvatar);
-          }
-
-          res.onSuccess({ avatar: req.file.filename }, "Avatar updated");
-        } else {
-          throw new Error("Token not provided");
+        if (!req.userData) {
+          throw AppError.unauthorized();
         }
+        if (!req.file) {
+          throw AppError.badRequest("Image not uploaded");
+        }
+        if (!avatarExtensions.includes(req.file.mimetype.split('/')[1].toUpperCase())) {
+          throw AppError.badRequest("Unsupported file type");
+        }
+
+        const user = await UsersCtrl.getById(req.userData.userId);
+        const oldAvatar = user.avatar;
+        await UsersCtrl.findOneAndUpdate({
+          _id: req.userData.userId
+        }, {
+          avatar: req.file.filename
+        });
+        if (oldAvatar != "default_avatar.png") {
+          await fs.promises.unlink(__homedir + '/public/uploads/' + oldAvatar);
+        }
+
+        res.onSuccess({ avatar: req.file.filename }, "Avatar updated");
       } catch (e) {
         if (req.file) {
           await fs.promises.unlink(__homedir + '/public/uploads/' + req.file.filename);
         }
-        res.onError(new AppError(e.message, 400));
+        next(e);
       }
     })
   .delete(
-    isLoggedIn,
-    async (req, res) => {
+    isLoggedIn(),
+    async (req, res, next) => {
       try {
         const user = await UsersCtrl.getById(req.userData.userId);
         const oldAvatar = user.avatar;
@@ -161,76 +153,72 @@ router.route('/avatar')
         await fs.promises.unlink(__homedir + '/public/uploads/' + oldAvatar);
         res.onSuccess({ avatar: 'default_avatar.png' }, "Avatar updated");
       } catch (e) {
-        res.onError(new AppError(e.message, 400));
+        next(e);
       }
-    }
-  );
+    });
 
 router.route('/friendrequest')
   .get(
-    isLoggedIn,
-    async (req, res) => {
+    isLoggedIn(),
+    async (req, res, next) => {
       try {
         const notifications = await UsersCtrl.getFriendRequests(req.userData.userId);
         res.onSuccess(notifications, "");
       } catch (e) {
-        res.onError(new AppError(e.message, 400));
+        next(e);
       }
-    }
-  )
+    })
   .post(
-    isLoggedIn,
+    isLoggedIn(),
     body('to').exists(),
     validationResult,
-    async (req, res) => {
+    async (req, res, next) => {
       try {
         if (req.userData.userId == req.body.to) {
-          throw new Error("You can't send request to yourself");
+          throw AppError.badRequest("You can't send request to yourself");
         }
 
         const user = await UsersCtrl.getById(req.body.to);
-        if (user) {
-          const check = await FRequestCtrl.findOne({
-            $or: [
-              { from: req.userData.userId, to: req.body.to },
-              { to: req.userData.userId, from: req.body.to }
-            ]
+        if (!user) {
+          throw AppError.notFound('User not found');
+        }
+
+        const check = await FRequestCtrl.findOne({
+          $or: [
+            { from: req.userData.userId, to: req.body.to },
+            { to: req.userData.userId, from: req.body.to }
+          ]
+        });
+        if (!check) {
+          await UsersCtrl.friendRequest({
+            from: req.userData.userId,
+            to: req.body.to
           });
 
-          if (!check) {
-            await UsersCtrl.friendRequest({
-              from: req.userData.userId,
-              to: req.body.to
-            });
+          const fromUser = await UsersCtrl.getById(req.userData.userId).lean();
 
-            const fromUser = await UsersCtrl.getById(req.userData.userId).lean();
-            
-            if (onlineUsers.has(req.body.to)) {
-              onlineUsers.get(req.body.to).emit('friend_request', fromUser);
-            }
-
-            res.onSuccess({}, "Request sent");
-          } else if (check.to == req.userData.userId) {
-            await UsersCtrl.acceptFriendRequest(check._id);
-            res.onSuccess({ accepted: true }, "Request accepted");
-          } else {
-            throw new Error("Request is already sent");
+          if (onlineUsers.has(req.body.to)) {
+            onlineUsers.get(req.body.to).emit('friend_request', fromUser);
           }
+
+          res.onSuccess({}, "Request sent");
+        } else if (check.to == req.userData.userId) {
+          await UsersCtrl.acceptFriendRequest(check._id);
+          res.onSuccess({ accepted: true }, "Request accepted");
         } else {
-          throw new Error("User not found");
+          throw AppError.badRequest("Request is already sent");
         }
       } catch (e) {
-        res.onError(new AppError(e.message, 400));
+        next(e);
       }
-    }
-  );
+    });
 
 router.route('/friendrequest/:userId')
   .get(
-    isLoggedIn,
+    isLoggedIn(),
     param('userId').exists(),
     validationResult,
-    async (req, res) => {
+    async (req, res, next) => {
       try {
         const request = await FRequestCtrl.findOne({
           $or: [
@@ -251,66 +239,61 @@ router.route('/friendrequest/:userId')
           res.onSuccess({ sent: false }, "");
         }
       } catch (e) {
-        res.onError(new AppError(e.message, 400));
+        next(e);
       }
-    }
-  );
+    });
 
 router.route('/friendrequestcount')
   .get(
-    isLoggedIn,
-    async (req, res) => {
+    isLoggedIn(),
+    async (req, res, next) => {
       try {
         const count = await FRequestCtrl.count({ to: req.userData.userId });
         res.onSuccess(count, "");
       } catch (e) {
-        res.onError(new AppError(e.message, 400));
+        next(e);
       }
-    }
-  );
+    });
 
 router.route('/isfriend/:userId')
   .get(
-    isLoggedIn,
+    isLoggedIn(),
     param('userId'),
     validationResult,
-    async (req, res) => {
+    async (req, res, next) => {
       try {
         const friend = await UsersCtrl.checkFriend(req.userData.userId, req.params.userId);
         res.onSuccess(friend, "");
       } catch (e) {
-        res.onError(new AppError(e.message, 400));
+        next(e);
       }
-    }
-  );
+    });
 
 router.route('/unfriend/:userId')
   .delete(
-    isLoggedIn,
+    isLoggedIn(),
     param('userId'),
     validationResult,
-    async (req, res) => {
+    async (req, res, next) => {
       try {
         const check = await UsersCtrl.checkFriend(req.userData.userId, req.params.userId);
-        
-        if (check[0].isFriend) {
-          const friend = await UsersCtrl.unfriend(req.userData.userId, req.params.userId);
-          res.onSuccess(friend, "");
-        } else {
-          throw new Error("Friend not found");
+        if (!check[0].isFriend) {
+          throw AppError.notFound("Friend not found");
         }
+        
+        const friend = await UsersCtrl.unfriend(req.userData.userId, req.params.userId);
+        res.onSuccess(friend, "");
       } catch (e) {
-        res.onError(new AppError(e.message, 400));
+        next(e);
       }
-    }
-  );
+    });
 
 router.route('/refusefriend/:userId')
   .delete(
-    isLoggedIn,
+    isLoggedIn(),
     param('userId'),
     validationResult,
-    async (req, res) => {
+    async (req, res, next) => {
       try {
         await FRequestCtrl.delOne({
           $or: [
@@ -325,18 +308,17 @@ router.route('/refusefriend/:userId')
 
         res.onSuccess({}, "deleted");
       } catch (e) {
-        res.onError(new AppError(e.message, 400));
+        next(e);
       }
-    }
-  );
+    });
 
 router.route('/friends/:userId')
   .get(
-    isLoggedIn,
+    isLoggedIn(),
     param('userId').exists(),
     query('page').exists(),
     validationResult,
-    async (req, res) => {
+    async (req, res, next) => {
       try {
         if (req.userData.userId == req.params.userId) {
           const friends = await UsersCtrl.getFriends(req.userData.userId, req.query.page);
@@ -364,23 +346,22 @@ router.route('/friends/:userId')
           res.onSuccess(result, "");
         }
       } catch (e) {
-        res.onError(new AppError(e.message, 400));
+        next(e);
       }
-    }
-  );
+    });
 
 router.route('/friendscount/:userId')
   .get(
-    isLoggedIn,
+    isLoggedIn(),
     param('userId').exists(),
-    async (req, res) => {
+    validationResult,
+    async (req, res, next) => {
       try {
         const friendsCount = await UsersCtrl.friendsCount(req.params.userId);
         res.onSuccess(friendsCount, "");
       } catch (e) {
-        res.onError(new AppError(e.message, 400));
+        next(e);
       }
-    }
-  )
+    });
 
 module.exports = router;

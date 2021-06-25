@@ -1,5 +1,5 @@
 const express = require('express');
-const { body, query, param } = require('express-validator');
+const { body, query, param, validationResult: vr } = require('express-validator');
 const fs = require('fs');
 
 const router = express.Router();
@@ -13,38 +13,41 @@ const isLoggedIn = require('../middlewares/token-validator');
 
 router
   .get('/',
-    isLoggedIn,
+    isLoggedIn(),
     query('q').exists(),
     validationResult,
-    async (req, res) => {
+    async (req, res, next) => {
       try {
         const communities = await CommunitiesCtrl.find({
           name: { "$regex": req.query.q, "$options": "i" }
         });
         res.onSuccess(communities, "");
       } catch (e) {
-        res.onError(new AppError(e.message, 400));
+        next(e);
       }
     })
   .get('/:commId',
-    isLoggedIn,
-    async (req, res) => {
+    isLoggedIn(),
+    async (req, res, next) => {
       try {
         const comm = await CommunitiesCtrl.getById(req.params.commId);
+        if (!comm) {
+          throw AppError.notFound('Community not found');
+        }
         res.onSuccess(comm, "");
       } catch (e) {
-        res.onError(new AppError(e.message, 404));
+        next(e);
       }
     })
   .get('/userfollowing/:userId',
-    isLoggedIn,
+    isLoggedIn(),
     query('page').exists().isNumeric(),
     validationResult,
-    async (req, res) => {
+    async (req, res, next) => {
       try {
         const user = await UsersCtrl.getById(req.params.userId);
         if (!user) {
-          throw new Error("User not found");
+          throw AppError.notFound("User not found");
         }
         
         const communities = await CommunitiesCtrl.getUserFollowingCommunities(
@@ -55,18 +58,18 @@ router
         
         res.onSuccess(communities, "");
       } catch (e) {
-        res.onError(new AppError(e.message, 400));
+        next(e);
       }
     })
   .get('/usercreated/:userId',
-    isLoggedIn,
+    isLoggedIn(),
     query('page').exists().isNumeric(),
     validationResult,
-    async (req, res) => {
+    async (req, res, next) => {
       try {
         const user = await UsersCtrl.getById(req.params.userId);
         if (!user) {
-          throw new Error("User not found");
+          throw AppError.notFound("User not found");
         }
 
         const communities = await CommunitiesCtrl.getUserCommunities(
@@ -77,14 +80,14 @@ router
         
         res.onSuccess(communities, "");
       } catch (e) {
-        res.onError(new AppError(e.message, 400));
+        next(e);
       }
     })
   .get('/posts/:commId',
-    isLoggedIn,
+    isLoggedIn(),
     query('page').exists().isNumeric(),
     validationResult,
-    async (req, res) => {
+    async (req, res, next) => {
       try {
         const posts = await CommunitiesCtrl.getPosts(
           req.params.commId,
@@ -93,14 +96,14 @@ router
         );
         res.onSuccess(posts, "");
       } catch (e) {
-        res.onError(new AppError(e.message, 400));
+        next(e);
       }
     })
   .get('/isfollower/:communityId',
-    isLoggedIn,
-    param('communityId').exists(),
+    isLoggedIn(),
+    param('communityId').exists().isMongoId(),
     validationResult,
-    async (req, res) => {
+    async (req, res, next) => {
       try {
         const follower = await CommunitiesCtrl.isFollower(
           req.params.communityId,
@@ -108,14 +111,14 @@ router
         );
         res.onSuccess(follower, "");
       } catch (e) {
-        res.onError(new AppError(e.message, 400));
+        next(e);
       }
     })
   .post('/',
-    isLoggedIn,
+    isLoggedIn(),
     body('name').exists().isLength({ min: 1, max: 128 }),
     validationResult,
-    async (req, res) => {
+    async (req, res, next) => {
       try {
         const newComm = await CommunitiesCtrl.add({
           creatorId: req.userData.userId,
@@ -126,16 +129,16 @@ router
 
         res.onSuccess(newComm, "");
       } catch (e) {
-        res.onError(new AppError(e.message, 400));
+        next(e);
       }
     })
   .post('/togglefollow/:commId',
-    isLoggedIn,
-    async (req, res) => {
+    isLoggedIn(),
+    async (req, res, next) => {
       try {
         const comm = await CommunitiesCtrl.getById(req.params.commId);
         if (!comm) {
-          throw new Error("Community not found");
+          throw AppError.notFound("Community not found");
         }
         
         const isFollower = await CommunitiesCtrl.isFollower(comm._id, req.userData.userId);
@@ -149,38 +152,40 @@ router
           res.onSuccess({}, "followed");
         }
       } catch (e) {
-        res.onError(new AppError(e.message, 400));
+        next(e);
       }
     });
 
 router.route('/avatar')
   .patch(
     upload.single('file'),
-    async (req, res) => {
+    isLoggedIn({ ignoreError: true }),
+    body('communityId').exists().isMongoId(),
+    async (req, res, next) => {
       try {
-        console.log(req.file, req.body.communityId);
         const avatarExtensions = ['PNG', 'JPG', 'JPEG', 'GIF'];
-        const loggedIn = await isLoggedIn(req, {onError() {
-          return false;
-        }}, () => {});
+        const errors = vr(req);
 
-        if (loggedIn === false) {
-          throw new Error("Token not provided");
+        if (!req.userData) {
+          throw AppError.unauthorized();
+        }
+        if (!errors.isEmpty()) {
+          throw AppError.badRequest('Validation Error', errors.mapped());
         }
         if (!req.file) {
-          throw new Error("Image not uploaded");
+          throw AppError.badRequest("Image not uploaded");
         }
         if (!avatarExtensions.includes(req.file.mimetype.split('/')[1].toUpperCase())) {
-          throw new Error("Unsupported file type");
+          throw AppError.badRequest("Unsupported file type");
         }
 
         const community = await CommunitiesCtrl.getById(req.body.communityId);
 
         if (!community) {
-          throw new Error("Community not found");
+          throw AppError.notFound("Community not found");
         }
         if (community.creatorId != req.userData.userId) {
-          throw new Error("Access denied");
+          throw AppError.inaccessible();
         }
 
         const oldAvatar = community.avatar;
@@ -198,12 +203,14 @@ router.route('/avatar')
         if (req.file) {
           await fs.promises.unlink(__homedir + '/public/uploads/' + req.file.filename);
         }
-        res.onError(new AppError(e.message, 400));
+        next(e);
       }
     })
   .delete(
-    isLoggedIn,
-    async (req, res) => {
+    isLoggedIn(),
+    body('communityId').exists().isMongoId(),
+    validationResult,
+    async (req, res, next) => {
       try {
         const community = await CommunitiesCtrl.getById(req.body.communityId);
         const oldAvatar = community.avatar;
@@ -218,7 +225,7 @@ router.route('/avatar')
         }
         res.onSuccess({ avatar: 'default_community_image.png' }, "Avatar updated");
       } catch (e) {
-        res.onError(new AppError(e.message, 400));
+        next(e);
       }
     });
 

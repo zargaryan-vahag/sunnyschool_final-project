@@ -30,7 +30,7 @@ router
       .isLength({ min: 8, max: 32 }).bail()
       .exists(),
     validationResult,
-    async (req, res) => {
+    async (req, res, next) => {
       try {
         const token = randomstring.generate(32);
         const userdata = await AuthCtrl.add({
@@ -51,59 +51,59 @@ router
 
         await mail.send();
       } catch (e) {
-        res.onError(new AppError(e, 400));
+        next(e);
       }
     })
   .post('/verify',
     body('verifyToken').exists(),
     validationResult,
-    async (req, res) => {
+    async (req, res, next) => {
       const token = req.body.verifyToken;
       try {
         await AuthCtrl.verify(token);
-        res.onSuccess(null, "User successfully verified", 200);
+        res.onSuccess({}, "User successfully verified");
       } catch (e) {
-        res.onError(new AppError(e, 404));
+        next(e);
       }
     })
   .post('/signin',
     body('login').exists(),
     body('password').exists(),
     validationResult,
-    async (req, res) => {
+    async (req, res, next) => {
       try {
         const accessToken = await AuthCtrl.signin(req.body.login, req.body.password);
         if (accessToken) {
           res.onSuccess(accessToken, "Succesfully logged in");
         }
       } catch (e) {
-        res.onError(new AppError(e, 400));
+        next(e);
       }
     })
   .post('/user',
-    isLoggedIn,
-    async (req, res) => {
+    isLoggedIn(),
+    async (req, res, next) => {
       try {
         const user = await UsersCtrl.getById(req.userData.userId);
         res.onSuccess(user.toObject(), "");
       } catch (e) {
-        res.onError(new AppError(e, 401));
+        next(e);
       }
     })
   .post('/forgot',
     body('email').exists().isEmail(),
     validationResult,
-    async (req, res) => {
+    async (req, res, next) => {
       try {
         const user = await AuthCtrl.findOne({ email: req.body.email });
         const token = randomstring.generate(32);
         
         if (!user) {
-          throw new Error("User not found");
+          throw AppError.badRequest("User not found");
         }
 
         if (!user.isverified) {
-          throw new Error("User is not verified");
+          throw AppError.badRequest("User is not verified");
         }
 
         user.token = token;
@@ -111,19 +111,18 @@ router
         await AuthCtrl.sendChangePassMail(user.email, token);
         res.onSuccess(null, "Email with instructions has been sent");
       } catch (e) {
-        console.log(e);
-        res.onError(new AppError(e, 400));
+        next(e);
       }
     })
   .post('/passreset',
     body('password').exists().isLength({ min: 8, max: 32 }).bail(),
     body('resetToken').exists(),
     validationResult,
-    async (req, res) => {
+    async (req, res, next) => {
       try {
         const user = await UsersCtrl.findOne({ token: req.body.resetToken });
         if (!user) {
-          throw new Error("User not found");
+          throw AppError.badRequest("User not found");
         }
 
         user.password = await AuthCtrl.hashPassword(req.body.password);
@@ -132,7 +131,7 @@ router
 
         res.onSuccess(null, "Password was successfuly reseted");
       } catch (e) {
-        res.onError(new AppError(e, 404));
+        next(e);
       }
     });
 

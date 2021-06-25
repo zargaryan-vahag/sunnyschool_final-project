@@ -1,8 +1,9 @@
 const User = require('../models/user');
-const UsersCtrl = require('../controllers/users.ctrl.js');
+const UsersCtrl = require('../controllers/users.ctrl');
 const bcrypt = require('../managers/bcrypt');
 const TokenManager = require('../managers/token-manager');
 const Mail = require('../managers/mail-manager');
+const AppError = require('../managers/app-error');
 
 class AuthCtrl {
   static findOne(params) {
@@ -11,9 +12,9 @@ class AuthCtrl {
 
   static async add(data) {
     if (await UsersCtrl.exists({ email: data.email })) {
-      throw new Error('Email is already taken');
+      throw AppError.badRequest('Email is already taken');
     } else if (await UsersCtrl.exists({ username: data.username })) {
-      throw new Error('Username is already taken');
+      throw AppError.badRequest('Username is already taken');
     } else {
       return UsersCtrl.add({
         email: data.email,
@@ -29,7 +30,7 @@ class AuthCtrl {
   static async verify(token) {
     const user = await User.findOne({ token: token }).select("+password +token +email");
     if (!user) {
-      throw new Error('User not found');
+      throw AppError.notFound('User not found');
     } else {
       user.isverified = true;
       user.token = "";
@@ -52,10 +53,10 @@ class AuthCtrl {
           userId: user._id
         });
       } else {
-        throw new Error("Wrong login or password");
+        throw AppError.badRequest("Wrong login or password");
       }
     } else {
-      throw new Error("Wrong login or password");
+      throw AppError.badRequest("Wrong login or password");
     }
   }
 

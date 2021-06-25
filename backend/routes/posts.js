@@ -1,12 +1,11 @@
 const express = require('express');
-const { body, query } = require('express-validator');
+const { body, query, param } = require('express-validator');
 const fs = require('fs');
 
 const router = express.Router();
 const isLoggedIn = require('../middlewares/token-validator');
 const validationResult = require('../middlewares/validation-result');
 const upload = require('../middlewares/upload');
-const UsersCtrl = require('../controllers/users.ctrl');
 const PostsCtrl = require('../controllers/posts.ctrl');
 const AppError = require('../managers/app-error');
 const CommentsCtrl = require('../controllers/comments.ctrl');
@@ -14,58 +13,59 @@ const CommunitiesCtrl = require('../controllers/communities.ctrl');
 
 router.route('/')
   .get(
-    isLoggedIn,
+    isLoggedIn(),
     query('page').isNumeric(),
-    async (req, res) => {
+    validationResult,
+    async (req, res, next) => {
       try {
         const posts = await PostsCtrl.findNews({}, req.userData.userId, req.query.page);
-        if (posts) {
-          res.onSuccess(posts, "");
-        } else {
-          throw new Error("No found posts");
+        if (!posts) {
+          throw AppError.notFound("No found posts");
         }
+
+        res.onSuccess(posts, "");
       } catch (e) {
-        res.onError(new AppError(e.message, 400));
+        next(e);
       }
-    }
-  )
+    })
   .post(
     upload.array('files', 10),
-    async (req, res) => {      
+    isLoggedIn({ ignoreError: true }),
+    async (req, res, next) => {      
       try {
-        const loggedIn = await isLoggedIn(req, {onError() {
-          return false;
-        }}, () => {});
-
-        if (loggedIn !== false) {
-          if (req.files && req.files.length === 0 && (!req.body.postText || req.body.postText == '')) {
-            throw new Error("Wrong data");
-          }
-          
-          const files = req.files ? req.files.map((file) => {
-            return file.filename;
-          }) : [];
-          const params = {
-            author: req.userData.userId,
-            content: req.body.postText.trim(),
-            files: files
-          };
-
-          if (req.body.communityId) {
-            const comm = await CommunitiesCtrl.getById(req.body.communityId);
-            if (comm && comm.creatorId == req.userData.userId) {
-              params.community = comm._id;
-            }
-          }
-
-          const newPost = await PostsCtrl.add(params);
-          if (params.community) {
-            await CommunitiesCtrl.addPost(params.community, newPost._id);
-          }
-          res.onSuccess(await PostsCtrl.getCommunityPost(newPost._id), "Post created");
-        } else {
-          throw new Error("Token not provided");
+        if (!req.userData) {
+          throw AppError.unauthorized();
         }
+        if (
+          req.files && req.files.length === 0 && 
+          req.body.postText && req.body.postText == ''
+        ) {
+          throw AppError.badRequest("Post must contain file, text or both");
+        }
+        
+        const files = req.files ? req.files.map(file => file.filename) : [];
+        const params = {
+          author: req.userData.userId,
+          content: req.body.postText.trim(),
+          files: files
+        };
+
+        if (req.body.communityId) {
+          const comm = await CommunitiesCtrl.getById(req.body.communityId);
+          if (!comm) {
+            throw AppError.notFound('Community not found');
+          }
+          if (comm.creatorId != req.userData.userId) {
+            throw AppError.inaccessible('Acces to community denied');
+          }
+          params.community = comm._id;
+        }
+
+        const newPost = await PostsCtrl.add(params);
+        if (params.community) {
+          await CommunitiesCtrl.addPost(params.community, newPost._id);
+        }
+        res.onSuccess(await PostsCtrl.getCommunityPost(newPost._id), "Post created");
       } catch (e) {
         if (req.files) {
           const files = [];
@@ -74,42 +74,40 @@ router.route('/')
           });
           await Promise.all(files);
         }
-        res.onError(new AppError(e.message), 400);
+        next(e);
       }
-    }
-  )
+    })
   .delete(
-    isLoggedIn,
+    isLoggedIn(),
     body('postId').exists(),
-    async (req, res) => {
+    validationResult,
+    async (req, res, next) => {
       try {
         const post = await PostsCtrl.getById(req.body.postId);
-        if (post) {
-          if (post.author == req.userData.userId) {
-            await PostsCtrl.delete(req.body.postId);
-            if (post.community) {
-              await CommunitiesCtrl.delPost(post.community, post._id);
-            }
-            
-            res.onSuccess({}, "Post deleted");
-          } else {
-            throw new Error("Assess denied");
-          }
-        } else {
-          throw new Error("Post not found");
+        if (!post) {
+          throw AppError.notFound("Post not found");
         }
+        if (post.author != req.userData.userId) {
+          throw AppError.inaccessible();
+        }
+
+        await PostsCtrl.delete(req.body.postId);
+        if (post.community) {
+          await CommunitiesCtrl.delPost(post.community, post._id);
+        }
+        
+        res.onSuccess({}, "Post deleted");
       } catch (e) {
-        res.onError(new AppError(e.message, 400));
+        next(e);
       }
-    }
-  );
+    });
 
 router.route('/user/:userId')
   .get(
-    isLoggedIn,
+    isLoggedIn(),
     query('action').exists(),
-    query('page').isNumeric(),
-    async (req, res) => {
+    validationResult,
+    async (req, res, next) => {
       try {
         if (req.query.action == 'posts') {
           const userPosts = await PostsCtrl.find(
@@ -128,118 +126,113 @@ router.route('/user/:userId')
           });
           res.onSuccess(count, "");
         } else {
-          throw new Error("Unknown action");
+          throw AppError.badRequest("Unknown action");
         }
       } catch (e) {
-        res.onError(new AppError(e.message, 400));
+        next(e);
       }
-    }
-  );
+    });
 
 router.route('/like/:postId')
   .post(
-    isLoggedIn,
-    async (req, res) => {
+    isLoggedIn(),
+    param('postId').exists(),
+    validationResult,
+    async (req, res, next) => {
       try {
         const result = await PostsCtrl.toggleLike(req.params.postId, req.userData.userId);
         res.onSuccess(result, "");
       } catch (e) {
-        res.onError(new AppError(e.message, 400));
+        next(e);
       }
-    }
-  );
+    });
 
 
 router.route('/comments/:postId')
   .get(
-    isLoggedIn,
-    query('page')
-      .isNumeric()
-      .exists(),
+    isLoggedIn(),
+    query('page').exists().isNumeric(),
     validationResult,
-    async (req, res) => {
+    async (req, res, next) => {
       try {
         const comments = await PostsCtrl.getComments(req.params.postId, req.query.page);
+        if (!comments) {
+          throw AppError.notFound('Comments not found');
+        }
         res.onSuccess(comments, "");
       } catch (e) {
-        res.onError(new AppError(e.message, 400));
+        next(e);
       }
-    }
-  )
+    })
   .post(
-    isLoggedIn,
+    isLoggedIn(),
     body('text')
       .exists().bail()
       .isString().bail()
       .isLength({ min: 1 }).bail(),
     validationResult,
-    async (req, res) => {
+    async (req, res, next) => {
       try {
         const post = await PostsCtrl.getById(req.params.postId);
-
-        if (post) {
-          const comment = await PostsCtrl.addComment(
-            req.params.postId,
-            req.userData.userId,
-            req.body.text
-          );
-          
-          res.onSuccess({
-            commentsCount: post.comments + 1,
-            comment: comment,
-          }, "Comment created");
-        } else {
-          throw new Error("Post not found");
+        if (!post) {
+          throw AppError.notFound('Post not found');
         }
+
+        const comment = await PostsCtrl.addComment(
+          req.params.postId,
+          req.userData.userId,
+          req.body.text
+        );
+        
+        res.onSuccess({
+          commentsCount: post.comments + 1,
+          comment: comment,
+        }, "Comment created");
       } catch (e) {
-        res.onError(new AppError(e.message, 400));
+        next(e);
       }
-    }
-  )
+    })
   .delete(
-    isLoggedIn,
+    isLoggedIn(),
     body('commentId').exists(),
     validationResult,
-    async (req, res) => {
+    async (req, res, next) => {
       try {
         const comment = await CommentsCtrl.getById(req.body.commentId);
         const post = await PostsCtrl.getById(req.params.postId);
 
         if (!comment) {
-          throw new Error("Comment not found");
+          throw AppError.notFound("Comment not found");
         }
-
         if (!post) {
-          throw new Error("Post not found");
+          throw AppError.notFound("Post not found");
+        }
+        if (
+          comment.userId != req.userData.userId &&
+          post.author != req.userData.userId
+        ) {
+          throw AppError.inaccessible();
         }
 
-        if (
-          comment.userId == req.userData.userId ||
-          post.author == req.userData.userId
-        ) {
-          await PostsCtrl.delComment(req.params.postId, req.body.commentId);
-          res.onSuccess({ commentsCount: post.comments - 1 }, "Comment deleted");
-        } else {
-          throw new Error("Access denied");
-        }
+        await PostsCtrl.delComment(req.params.postId, req.body.commentId);
+        res.onSuccess({ commentsCount: post.comments - 1 }, "Comment deleted");
       } catch (e) {
-        res.onError(new AppError(e.message, 400));
+        next(e);
       }
-    }
-  );
+    });
 
 router.route('/liked')
   .get(
-    isLoggedIn,
+    isLoggedIn(),
     query('page').isNumeric(),
-    async (req, res) => {
+    validationResult,
+    async (req, res, next) => {
       try {
         const result = await PostsCtrl.findLiked(req.userData.userId, req.query.page);
         res.onSuccess(result, "");
       } catch (e) {
-        res.onError(new AppError(e.message, 400));
+        next(e);
       }
-    }
-  );
+    });
 
 module.exports = router;

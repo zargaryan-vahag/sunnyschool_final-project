@@ -10,8 +10,8 @@ const isLoggedIn = require('../middlewares/token-validator');
 
 router
   .get('/',
-    isLoggedIn,
-    async (req, res) => {
+    isLoggedIn(),
+    async (req, res, next) => {
       try {
         const dialogs = await DialogCtrl.getUserDialogs(req.userData.userId);
         for (let dialog of dialogs) {
@@ -22,9 +22,8 @@ router
         }
         res.onSuccess(dialogs, "");
       } catch (e) {
-        res.onError(new AppError(e.message, 400));
+        next(e);
       }
-    }
-  );
+    });
 
 module.exports = router;

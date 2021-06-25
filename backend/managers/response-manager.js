@@ -7,7 +7,7 @@ const ResponseBase = {
 class ResponseManager {
   static getResponseHandler(res) {
     return {
-      onSuccess: function (data, message, code = 200) {
+      onSuccess: function (data, message = "", code = 200) {
         ResponseManager.respondWithSuccess(res, code, data, message);
       },
       onError: function (error, data) {
