@@ -5,7 +5,8 @@
 Simple social network example
 
 ### Versions
-node - v12.6.0
+* node - v12.6.0
+* mongo - v4.2.0
 
 ## Table of Contents
 * [Installation](#installation)
