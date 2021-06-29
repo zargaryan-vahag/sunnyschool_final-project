@@ -10,12 +10,12 @@ class ResponseManager {
       onSuccess: function (data, message = "", code = 200) {
         ResponseManager.respondWithSuccess(res, code, data, message);
       },
-      onError: function (error, data) {
-        if (error instanceof Error && !data && process.env.NODE_ENV === 'development') {
-          data = JSON.stringify(error, Object.getOwnPropertyNames(error));
-        }
-        ResponseManager.respondWithError(res, error.httpStatus || 500, error.message || 'Unknown error', data);
-      }
+      // onError: function (error, data) {
+      //   if (error instanceof Error && !data && process.env.NODE_ENV === 'development') {
+      //     data = JSON.stringify(error, Object.getOwnPropertyNames(error));
+      //   }
+      //   ResponseManager.respondWithError(res, error.httpStatus || 500, error.message || 'Unknown error', data);
+      // }
     };
   }
 
@@ -27,13 +27,13 @@ class ResponseManager {
     res.status(code).json(response);
   }
 
-  static respondWithError(res, errorCode, message = "", data) {
-    let response = Object.assign({}, ResponseBase);
-    response.success = false;
-    response.message = message;
-    response.errors = data;
-    res.status(errorCode).json(response);
-  }
+  // static respondWithError(res, errorCode, message = "", data) {
+  //   let response = Object.assign({}, ResponseBase);
+  //   response.success = false;
+  //   response.message = message;
+  //   response.errors = data;
+  //   res.status(errorCode).json(response);
+  // }
 }
 
 module.exports = ResponseManager;

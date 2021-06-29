@@ -3,7 +3,7 @@ const Schema = mongoose.Schema;
 const { ObjectId } = Schema.Types;
 
 const MessageSchema = new Schema({ 
-  userId: { type: ObjectId, ref: 'User' },
+  userId: { type: ObjectId, ref: 'UserCommon' },
   text: { type: String },
   createdAt: { type: Date, default: Date.now }
 }, {
@@ -12,9 +12,9 @@ const MessageSchema = new Schema({
 });
 
 const Dialog = new Schema({
-  user1: { type: ObjectId, ref: 'User' },
-  user2: { type: ObjectId, ref: 'User' },
-  read: { type: ObjectId, ref: 'User' },
+  user1: { type: ObjectId, ref: 'UserCommon' },
+  user2: { type: ObjectId, ref: 'UserCommon' },
+  read: { type: ObjectId, ref: 'UserCommon' },
   messages: { type: [MessageSchema], select: false }
 }, {
   versionKey: false,

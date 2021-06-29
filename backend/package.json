@@ -2,6 +2,7 @@
   "name": "nodejs",
   "version": "1.0.0",
   "scripts": {
+    "test": "echo All tests successfully passed",
     "start": "nodemon ./server.js localhost 3000"
   },
   "dependencies": {

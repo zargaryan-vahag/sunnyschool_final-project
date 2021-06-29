@@ -2,14 +2,10 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 const { ObjectId } = Schema.Types;
 
-const Like = new Schema({
-  postId: { type: ObjectId, ref: 'Post' },
+module.exports = new Schema({ 
   userId: { type: ObjectId, ref: 'UserCommon' },
-}, {
+  createdAt: { type: Date, default: Date.now }
+}, { 
   versionKey: false,
   timestamps: true
 });
-
-Like.set('collection', 'likes');
-
-module.exports = mongoose.model('Like', Like);

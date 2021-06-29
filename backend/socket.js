@@ -1,7 +1,7 @@
 const TokenManager = require('./managers/token-manager');
+const DialogService = require('./services/dialog-service');
+const FriendService = require('./services/friend-service');
 const AppError = require('./managers/app-error');
-const UsersCtrl = require('./controllers/users.ctrl');
-const DialogCtrl = require('./controllers/dialogs.ctrl');
 
 module.exports = (server) => {  
   const io = require('socket.io')(server, {
@@ -42,18 +42,18 @@ module.exports = (server) => {
         let dialog;
 
         if (params.dialogId) {
-          dialog = await DialogCtrl.getMessagesByDialogId({
-            dialogId: params.dialogId,
-            user1: client.userId,
-            user2: params.userId,
-            page: params.page
-          });
+          dialog = await DialogService.getMessagesByDialogId(
+            params.dialogId,
+            client.userId,
+            params.userId,
+            params.page
+          );
         } else {
-          dialog = await DialogCtrl.getMessages({
-            user1: client.userId,
-            user2: params.userId,
-            page: params.page
-          });
+          dialog = await DialogService.getMessages(
+            client.userId,
+            params.userId,
+            params.page
+          );
         }
         
         client.emit('get_messages', dialog);
@@ -64,14 +64,13 @@ module.exports = (server) => {
 
     client.on('new_message', async (data) => {
       try {
-        const check = await UsersCtrl.checkFriend(client.userId, data.to);
-      
-        if (check[0].isFriend) {
-          const dialog = await DialogCtrl.newMessage({
-            from: client.userId,
-            to: data.to,
-            text: data.text.trim()
-          });
+        const isFriend = await FriendService.isFriend(client.userId, data.to);
+        if (isFriend) {
+          const dialog = await DialogService.newMessage(
+            client.userId,
+            data.to,
+            data.text.trim()
+          );
           
           client.emit('new_message', dialog);
           if (onlineUsers.has(data.to)) {
@@ -85,7 +84,7 @@ module.exports = (server) => {
 
     client.on('read', async (data) => {
       try {
-        await DialogCtrl.read(data.dialogId, client.userId);
+        await DialogService.read(data.dialogId, client.userId);
 
         if (onlineUsers.has(data.interlocutor)) {
           onlineUsers.get(data.interlocutor).emit('read', {
@@ -105,7 +104,7 @@ module.exports = (server) => {
 
     client.on('has_unread_message', async () => {
       try {
-        const check = await DialogCtrl.hasUnreadMessage(client.userId);
+        const check = await DialogService.hasUnreadMessage(client.userId);
         client.emit('has_unread_message', {
           has: check
         });
@@ -116,12 +115,12 @@ module.exports = (server) => {
 
     client.on('del_message', async (data) => {
       try {
-        const dialog = await DialogCtrl.getMessage(data.dialogId, data.messageId);
+        const dialog = await DialogService.getMessage(data.dialogId, data.messageId);
         if (dialog.messages[0].userId._id != client.userId) {
-          throw new Error("Access denied");
+          throw new AppError.inaccessible("Access denied");
         }
 
-        await DialogCtrl.delMessage(data.dialogId, data.messageId);
+        await DialogService.deleteMessage(data.dialogId, data.messageId);
         
         client.emit('del_message', dialog);
       } catch (e) {

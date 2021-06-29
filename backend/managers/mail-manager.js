@@ -25,6 +25,22 @@ class Mailer {
       });
     });
   }
+
+  static async sendSignupMail(email, token) {
+    const mail = new Mailer(email, {
+      subject: 'Account confirmation',
+      html: `Click <a href="http://${process.env.frontendHost}:${process.env.frontendPort}/verify?token=${token}">http://${process.env.frontendHost}:${process.env.frontendPort}/verify?token=${token}</a> to verify your account`,
+    });
+    await mail.send();
+  }
+
+  static async sendChangePassMail(email, token) {
+    const mail = new Mailer(email, {
+      subject: 'Password reset',
+      html: `Click <a href="http://${process.env.frontendHost}:${process.env.frontendPort}/passwordreset/${token}">http://${process.env.frontendHost}:${process.env.frontendPort}/passwordreset/${token}</a> to change your password`,
+    });
+    await mail.send();
+  }
 }
 
 module.exports = Mailer;

@@ -3,7 +3,7 @@ const Schema = mongoose.Schema;
 const { ObjectId } = Schema.Types;
 
 const LikeSchema = new Schema({ 
-  userId: { type: ObjectId, ref: 'User' },
+  userId: { type: ObjectId, ref: 'UserCommon' },
   timestamp: Date
 }, {
   versionKey: false,
@@ -11,7 +11,7 @@ const LikeSchema = new Schema({
 });
 
 const Post = new Schema({
-  author: { type: ObjectId, ref: 'User' },
+  author: { type: ObjectId, ref: 'UserCommon' },
   community: { type: ObjectId, ref: 'Community', default: null },
   content: { type: String, default: '' },
   files: [{ type: String }],

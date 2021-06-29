@@ -3,8 +3,8 @@ const Schema = mongoose.Schema;
 const { ObjectId } = Schema.Types;
 
 const FRequest = new Schema({
-  from: { type: ObjectId, ref: 'User' },
-  to: { type: ObjectId, ref: 'User' },
+  from: { type: ObjectId, ref: 'UserCommon' },
+  to: { type: ObjectId, ref: 'UserCommon' },
 }, {
   versionKey: false,
   timestamps: true

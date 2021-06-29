@@ -1,12 +1,12 @@
 const express = require('express');
 const http = require('http');
-const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const io = require('./socket');
 
-const responseHandler = require('./middlewares/response-handler.js');
+const responseHandler = require('./middlewares/response-handler');
+const errorMiddleware = require('./middlewares/error');
 const router = require('./router');
 const app = express();
 
@@ -18,10 +18,9 @@ app.use(cors());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(express.static('public'));
-app.use(bodyParser.urlencoded());
 app.use(responseHandler);
-
 router(app);
+app.use(errorMiddleware);
 
 mongoose.connect('mongodb://localhost/sunnyschool', {
   useNewUrlParser: true,

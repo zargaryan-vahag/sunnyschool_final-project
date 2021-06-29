@@ -4,7 +4,7 @@ const { ObjectId } = Schema.Types;
 
 const Comment = new Schema({
   postId: { type: ObjectId, ref: 'Post' },
-  userId: { type: ObjectId, ref: 'User' },
+  userId: { type: ObjectId, ref: 'UserCommon' },
   text: { type: String }
 }, {
   versionKey: false,

@@ -8,5 +8,5 @@ module.exports = (err, req, res, next) => {
       errors: err.errors
     });
   }
-  return res.status(500).json({ success: false, message: 'Unknown error' });
+  return res.status(500).json({ success: false, message: 'Unknown error \n' + err.message });
 };
