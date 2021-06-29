@@ -315,14 +315,16 @@ export default function Profile(props) {
     const friendsCount = await userFriendsCount(userId);
     setFriendsCount(friendsCount);
 
-    const friendCheck = await checkFriend(userId);
-    setIsFriend(friendCheck.data[0].isFriend);
+    if (props.userData._id != userId) {
+      const friendCheck = await checkFriend(userId);
+      setIsFriend(friendCheck.data);
 
-    if (!friendCheck.data[0].isFriend) {
-      const fRequest = await getFriendRequest(userId);
-      if (fRequest.success && fRequest.data.sent) {
-        setRequestSentFrom(fRequest.data.from)
-        setRequestSent(true);
+      if (!friendCheck.data) {
+        const fRequest = await getFriendRequest(userId);
+        if (fRequest.success && fRequest.data.sent) {
+          setRequestSentFrom(fRequest.data.from)
+          setRequestSent(true);
+        }
       }
     }
   }, [props.match.params.username, newPost]);
@@ -521,10 +523,12 @@ export default function Profile(props) {
                               <Box>{user.data.info.hometown}</Box>
                             </Box>
                           ) : null}
-                          <Box display="flex" justifyContent="space-between" m={1}>
-                            <Box>Gender</Box>
-                            <Box>{genderList[user.data.info.gender]}</Box>
-                          </Box>
+                          {(user.data.info.gender) ? (
+                            <Box display="flex" justifyContent="space-between" m={1}>
+                              <Box>Gender</Box>
+                              <Box>{genderList[user.data.info.gender]}</Box>
+                            </Box>
+                          ) : null}
                           {(user.data.info.birthday) ? (
                             <Box display="flex" justifyContent="space-between" m={1}>
                               <Box>Birthday</Box>

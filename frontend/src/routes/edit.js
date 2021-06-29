@@ -89,7 +89,7 @@ export default function Edit(props) {
                 hometown: Yup.string()
                   .nullable()
                   .max(32, 'Hometown must be less than 32 characters')
-                  .matches(/^[A-Za-z]*$/, 'Hometown must be in english'),
+                  .matches(/^[A-Za-z0-9]*$/, 'Hometown must be in english'),
                 gender: Yup.number()
                   .min(0, 'invalid gender')
                   .max(2, 'invalid gender')
@@ -102,9 +102,9 @@ export default function Edit(props) {
                   setText(response.message);
                   props.userData.firstname = values.firstname;
                   props.userData.lastname = values.lastname;
-                  props.userData.hometown = values.hometown;
-                  props.userData.gender = values.gender;
-                  props.userData.birthday = values.birthday;
+                  props.userData.info.hometown = values.hometown;
+                  props.userData.info.gender = values.gender;
+                  props.userData.info.birthday = values.birthday;
                 } else {
                   setTitle('Fail');
                   setText(response.message);

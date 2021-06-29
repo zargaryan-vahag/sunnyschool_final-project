@@ -61,6 +61,10 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
+
+const notificationAudio = new Audio(config.NOTIFICATIONSOUND);
+const messageAudio = new Audio(config.MESSAGESOUND);
+
 export default function Header(props) {
   function logout() {
     delToken();
@@ -110,8 +114,6 @@ export default function Header(props) {
 
   if (props.userData) {
     const socket = useContext(SocketContext);
-    const notificationAudio = new Audio(config.NOTIFICATIONSOUND)
-
     const friendRequest = useCallback((data) => {
       setNoteCount((noteCount) => (noteCount + 1));
       
@@ -144,8 +146,6 @@ export default function Header(props) {
     }, []);
 
     if (props.match.path != "/dialog/:userId") {
-      const messageAudio = new Audio(config.MESSAGESOUND);
-
       const newMessage = useCallback((data) => {
         if (props.userData._id != data.messages[0].userId._id) {
           try {
