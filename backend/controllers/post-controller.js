@@ -108,7 +108,13 @@ class PostController {
   static async getUserPosts(req, res, next) {
     try {
       if (req.query.action == 'posts') {
+        const user = await UserService.getById(req.params.userId);
         const userPosts = await PostService.getUserPosts(req.params.userId, req.query.page);
+        for (const post of userPosts) {
+          post.isLiked = await PostService.isLiked(post._id, req.userData.userId);
+          post.author = user;
+        }
+
         res.onSuccess(userPosts);
       } else if (req.query.action == 'postsCount') {
         const count = await PostService.getUserPostsCount(req.params.userId);

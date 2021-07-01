@@ -81,12 +81,18 @@ class CommunityController {
 
   static async getCommunityPosts(req, res, next) {
     try {
+      const community = await CommunityService.getById(req.params.commId);
+      if (!community) {
+        throw AppError.notFound('Community not found');
+      }
+
       const posts = await CommunityService.getCommunityPosts(
         req.params.commId,
         req.query.page
       );
 
       for (const post of posts) {
+        post.community = community;
         post.isLiked = await PostService.isLiked(post._id, req.userData.userId);
       }
 

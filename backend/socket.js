@@ -19,13 +19,13 @@ module.exports = (server) => {
           client.userId = decoded.userId;
           next();
         } else {
-          throw new AppError('Auth error', 401);
+          throw AppError.unauthorized();
         }
       } else {
-        throw new AppError('Token not provided', 401);
+        throw AppError.unauthorized();
       }
     } catch (e) {
-      new AppError(e.message, 401);
+      console.log(e);
     }
   }).on('connection', (client) => {
     console.log("User connected");
@@ -117,7 +117,7 @@ module.exports = (server) => {
       try {
         const dialog = await DialogService.getMessage(data.dialogId, data.messageId);
         if (dialog.messages[0].userId._id != client.userId) {
-          throw new AppError.inaccessible("Access denied");
+          throw AppError.inaccessible("Access denied");
         }
 
         await DialogService.deleteMessage(data.dialogId, data.messageId);

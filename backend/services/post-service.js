@@ -1,5 +1,6 @@
 const fs = require('fs');
 
+const UserService = require('../services/user-service');
 const Post = require('../models/post');
 const Like = require('../models/like');
 const Comment = require('../models/comment');
@@ -58,7 +59,7 @@ class PostService {
   }
 
   static async getUserPosts(userId, page) {
-    const posts = await Post.find({
+    return Post.find({
       author: userId,
       community: null
     }).skip((page - 1) * 10)
@@ -66,16 +67,6 @@ class PostService {
       .sort({ createdAt: -1 })
       .lean()
       .exec();
-    
-    for (const post of posts) {
-      const isLiked = await Like.exists({
-        postId: post._id,
-        userId
-      });
-      post.isLiked = isLiked;
-    }
-
-    return posts;
   }
 
   static async getUserPostsCount(userId) {
@@ -119,7 +110,7 @@ class PostService {
 
       return { liked: false, likesCount: post.likes - 1 };
     } else {
-      new Like({ postId, userId }).save();
+      await new Like({ postId, userId }).save();
       await Post.updateOne({ _id: postId }, {
         $push: { likedUsers: { userId } },
         $inc: { 'likes': 1 }
