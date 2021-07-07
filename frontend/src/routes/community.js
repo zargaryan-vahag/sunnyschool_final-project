@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, memo, useMemo } from 'react';
 import FbImageLibrary from 'react-fb-image-grid';
 import StickyBox from "react-sticky-box";
 import { makeStyles } from '@material-ui/core/styles';
@@ -24,10 +24,10 @@ import Header from '../modules/header';
 import Main from '../modules/main';
 import Footer from '../modules/footer';
 import paginator from '../managers/paginator';
+import PostList from '../components/post-list-memo';
 import AlertDialog from '../components/alert-dialog';
 import Info from '../components/info.js';
 import UserInputField from '../components/user-input-field';
-import Post from '../components/post';
 import ImageForm from '../components/image-input-form';
 
 const useStyles = makeStyles((theme) => ({
@@ -65,35 +65,8 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default function Communities(props) {
-  const classes = useStyles();
-  const [community, setCommunity] = useState({});
-  const [posts, setPosts] = useState({
-    success: false,
-    page: 1,
-    data: [],
-  });
-  const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState('');
-  const [text, setText] = useState('');
-  const [component, setComponent] = useState(null);
-
-  paginator(async (setEnd) => {
-    posts.page++;
-    const newPosts = await getPosts({
-      communityId: props.match.params.communityId,
-      page: posts.page,
-    });
-    setPosts({
-      success: true,
-      page: posts.page,
-      data: [...posts.data, ...newPosts.data]
-    });
-
-    setEnd(newPosts.data.length == 0);
-  });
-
-  async function toggleFollow(community) {
-    const result = await toggleFollowCommunity(community.data._id);
+  async function toggleFollow(communityId) {
+    const result = await toggleFollowCommunity(communityId);
 
     if (result.message == "followed") {
       community.data.isFollowed = true;
@@ -101,9 +74,7 @@ export default function Communities(props) {
       community.data.isFollowed = false;
     }
     
-    setCommunity({
-      ...community
-    });
+    setIsFollower(result.message == "followed");
   }
 
   async function postHandler(values, clearForm) {
@@ -116,6 +87,7 @@ export default function Communities(props) {
 
       if (res.success) {
         clearForm();
+        res.data.community = community.data;
         setPosts({
           success: true,
           data: [res.data, ...posts.data],
@@ -177,6 +149,54 @@ export default function Communities(props) {
     }
   }
 
+  function deletePost(postId) {
+    for (let i in posts.data) {
+      if (posts.data[i]._id == postId) {
+        posts.data.splice(i, 1);
+        setPosts({
+          success: true,
+          data: [...posts.data],
+          page: posts.page,
+        });
+        return;
+      }
+    }
+  }
+  
+  const classes = useStyles();
+  const [community, setCommunity] = useState({});
+  const [isFollower, setIsFollower] = useState(false);
+  const [posts, setPosts] = useState({
+    success: false,
+    page: 1,
+    data: [],
+  });
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState('');
+  const [text, setText] = useState('');
+  const [component, setComponent] = useState(null);
+
+  const memoValues = useMemo(() => ({
+    posts: posts.data,
+    userData: props.userData,
+    onDelete: deletePost,
+  }), [posts]);
+
+  paginator(async (setEnd) => {
+    posts.page++;
+    const newPosts = await getPosts({
+      communityId: props.match.params.communityId,
+      page: posts.page,
+    });
+    setPosts({
+      success: true,
+      page: posts.page,
+      data: [...posts.data, ...newPosts.data]
+    });
+
+    setEnd(newPosts.data.length == 0);
+  });
+
   useEffect(async () => {
     const community = await getCommunity(props.match.params.communityId);
     const psts = await getPosts({
@@ -196,6 +216,7 @@ export default function Communities(props) {
 
     if (community.success) {
       setCommunity(community);
+      setIsFollower(community.data.isFollowed);
     }
   }, [props.match.params.communityId]);
 
@@ -246,25 +267,7 @@ export default function Communities(props) {
                     </Box>
                   ) : null}
                   <Box m={1}>
-                    {posts && posts.success && posts.data.map((post) => {
-                      post.community = community.data;
-                      return (
-                        <Paper
-                          key={post._id}
-                          className={classes.paper}
-                          style={{marginBottom: '25px'}}
-                          id={post._id}
-                        >
-                          <Post
-                            authorData={post.author}
-                            userData={props.userData}
-                            postData={post}
-                            imageWidth={50}
-                            {...props}
-                          />
-                        </Paper>
-                      );
-                    })}
+                    <PostList memoValues={memoValues} />
                   </Box>
                 </Grid>
               </Grid>
@@ -299,11 +302,11 @@ export default function Communities(props) {
                           />
                         </Box>
                         <Box>
-                          {community.data.isFollowed ? (
+                          {isFollower ? (
                             <Button
                               variant="contained"
                               className={classes.profileButtons}
-                              onClick={() => {toggleFollow(community)}}
+                              onClick={() => {toggleFollow(community.data._id)}}
                             >
                               Unfollow
                             </Button>
@@ -311,7 +314,7 @@ export default function Communities(props) {
                             <Button
                               variant="contained"
                               className={classes.profileButtons}
-                              onClick={() => {toggleFollow(community)}}
+                              onClick={() => {toggleFollow(community.data._id)}}
                               style={{
                                 backgroundColor: '#5181B8',
                                 color: 'white',

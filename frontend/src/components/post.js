@@ -65,6 +65,7 @@ function PostHeader(props) {
       if (elem) {
         elem.style.display = "none";
       }
+      props.onDelete(id);
     } else {
       setTitle("Error");
       setText(res.message);
@@ -441,11 +442,16 @@ export default function Post(props) {
   );
 }
 
+Post.defaultProps = {
+  onDelete: () => {},
+}
+
 Post.propTypes = {
   authorData: PropTypes.object.isRequired,
   userData: PropTypes.object.isRequired,
   postData: PropTypes.object.isRequired,
   imageWidth: PropTypes.number,
   commentsBlock: PropTypes.bool,
-  commentsData: PropTypes.object
+  commentsData: PropTypes.object,
+  onDelete: PropTypes.func
 };

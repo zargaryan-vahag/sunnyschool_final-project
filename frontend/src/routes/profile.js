@@ -1,8 +1,7 @@
-import React, { useEffect, useState, useCallback, useContext } from 'react';
+import React, { useEffect, useState, useCallback, useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import StickyBox from "react-sticky-box";
 import FbImageLibrary from 'react-fb-image-grid';
-import { useBottomScrollListener } from 'react-bottom-scroll-listener';
 import { Formik, Form } from 'formik';
 import { makeStyles } from '@material-ui/core/styles';
 import CircularProgress from '@material-ui/core/CircularProgress';
@@ -33,17 +32,17 @@ import {
   friendsCount as userFriendsCount
 } from '../api/user';
 import { SocketContext } from '../context/socket';
+import PostList from '../components/post-list-memo';
 import Link from '../components/link';
 import Info from '../components/info.js';
 import UserInputField from '../components/user-input-field';
 import AlertDialog from '../components/alert-dialog';
-import Post from '../components/post';
 import Thumb from '../components/thumb';
 import Header from '../modules/header';
 import Main from '../modules/main';
 import Footer from '../modules/footer';
-import { getToken } from '../managers/token-manager';
 import birthday from '../managers/birthday';
+import paginator from '../managers/paginator';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -93,7 +92,11 @@ export default function Profile(props) {
 
       if (res.success) {
         clearForm();
-        setNewPost(!newPost);
+        setPosts({
+          success: true,
+          data: [res.data, ...posts.data],
+          page: posts.page
+        });
       } else {
         throw new Error(res.message);
       }
@@ -193,7 +196,14 @@ export default function Profile(props) {
                   }}
                 />
               </div>
-              <Thumb files={values.file} />
+              <Thumb
+                files={values.file}
+                onDelete={(index) => {
+                  console.log(values);
+                  values.file = [];
+                  setFieldValue('file', values.file);
+                }}
+              />
             </Form>
           )}
         </Formik>
@@ -265,11 +275,29 @@ export default function Profile(props) {
     }
   }
 
+  function deletePost(postId) {
+    for (let i in posts.data) {
+      if (posts.data[i]._id == postId) {
+        posts.data.splice(i, 1);
+        setPosts({
+          success: true,
+          data: [...posts.data],
+          page: posts.page,
+        });
+        return;
+      }
+    }
+  }
+
   const classes = useStyles();
   const socket = useContext(SocketContext);
   const avatarExtensions = ['PNG', 'JPG', 'JPEG', 'GIF'];
   const genderList = ['Not selected', 'Male', 'Female']
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState({
+    success: false,
+    data: {},
+    page: 1
+  });
   const [posts, setPosts] = useState({
     success: false,
     data: [],
@@ -281,12 +309,16 @@ export default function Profile(props) {
   const [title, setTitle] = useState('');
   const [text, setText] = useState('');
   const [component, setComponent] = useState(null);
-  const [newPost, setNewPost] = useState(false);
-  const [end, setEnd] = useState(false);
   const [requestSent, setRequestSent] = useState(false);
   const [requestSentFrom, setRequestSentFrom] = useState(false);
   const [isFriend, setIsFriend] = useState(false);
   const [online, setOnline] = useState(false);
+
+  const memoValues = useMemo(() => ({
+    posts: posts.data,
+    userData: user.data,
+    onDelete: deletePost,
+  }), [posts]);
 
   useEffect(async () => {
     let userId;
@@ -327,14 +359,14 @@ export default function Profile(props) {
         }
       }
     }
-  }, [props.match.params.username, newPost]);
+  }, [props.match.params.username]);
 
   const checkOnlineStatus = useCallback((data) => {
     setOnline(data.online);
   }, [online]);
 
   useEffect(() => {
-    if (user) {
+    if (user.success) {
       socket.emit("online_status", {
         userId: user.data._id
       });
@@ -347,10 +379,8 @@ export default function Profile(props) {
     }
   }, [user]);
 
-  useBottomScrollListener(async () => {
-    if (end) return;
-
-    if (user && user.success) {
+  paginator(async (setEnd) => {
+    if (user?.success) {
       posts.page++;
       const newPosts = await getPosts({
         userId: user.data._id,
@@ -362,14 +392,12 @@ export default function Profile(props) {
         page: posts.page
       });
 
-      if (newPosts.data.length == 0) {
-        setEnd(true);
-      }
+      setEnd(newPosts.data.length == 0);
     }
   });
 
-  if (user && posts && postsCount != null && friendsCount != null) {
-    if (user.success) {      
+  if (user.data._id && posts.success && postsCount != null && friendsCount != null) {
+    if (user.success) {
       return (
         <>
           <Header {...props} />
@@ -573,24 +601,7 @@ export default function Profile(props) {
                       </Box>
                     ) : null}
                     <Box component="div" m={1}>
-                      {posts && posts.success && posts.data.map((post) => {
-                        return (
-                          <Paper
-                            key={post._id}
-                            className={classes.paper}
-                            style={{marginBottom: '25px'}}
-                            id={post._id}
-                          >
-                            <Post
-                              authorData={user.data}
-                              userData={props.userData}
-                              postData={post}
-                              imageWidth={40}
-                              {...props}
-                            />
-                          </Paper>
-                        );
-                      })}
+                      <PostList memoValues={memoValues} />
                     </Box>
                   </Grid>
                 </Grid>
