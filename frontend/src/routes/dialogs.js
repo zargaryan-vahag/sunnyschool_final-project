@@ -14,6 +14,7 @@ import FiberManualRecordIcon from '@material-ui/icons/FiberManualRecord';
 import { getDialogs } from '../api/user';
 import { SocketContext } from '../context/socket';
 import Info from '../components/info.js';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import UserAvatar from '../components/user-avatar';
 
 const useStyles = makeStyles((theme) => ({
@@ -89,8 +90,8 @@ export default function Dialogs(props) {
     }
   }, [dialogs]);
   
-  return (
-    <>
+  if (dialogs) {
+    return (<>
       {!props.littleWindow && <Header {...props} />}
       <Main {...props}>
         <div className={classes.root}>
@@ -206,8 +207,19 @@ export default function Dialogs(props) {
         </div>
       </Main>
       {!props.littleWindow && <Footer />}
-    </>
-  );
+    </>);
+  } else {
+    return (<>
+      <Header {...props} />
+      <Main {...props}>
+        <Info
+          text="Loading..."
+          component={() => <CircularProgress color="inherit" />}
+        />
+      </Main>
+      <Footer />
+    </>);
+  }
 }
 
 Dialogs.defaultProps = {

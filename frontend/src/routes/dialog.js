@@ -167,9 +167,10 @@ export default function Dialog(props) {
       const scrollPosition = chatBody?.scrollHeight - chatBody?.scrollTop - chatBody?.clientHeight;
       
       if (scrollPosition < 120 || data.messages[0].userId._id == props.userData._id) {
-        animateScroll.scrollToBottom({
-          containerId: "chat-body"
-        });
+        // animateScroll.scrollToBottom({
+        //   containerId: "chat-body"
+        // });
+        scrollElem.current.scrollIntoView();
       }
     }
   }, []);
@@ -194,7 +195,7 @@ export default function Dialog(props) {
       }
 
       if (scrollElem.current) {
-        scrollElem.current.scrollIntoView({ behavior: 'smooth' });
+        scrollElem.current.scrollIntoView();
       }
     }
   }, [dialog]);
@@ -259,211 +260,205 @@ export default function Dialog(props) {
   
   if (user) {
     if (user.success) {
-      return (
-        <>
-          {!props.littleWindow && <Header {...props} />}
-          <Main {...props}>
-            <div className={classes.root}>
-              <Paper className={classes.paper}>
+      return (<>
+        {!props.littleWindow && <Header {...props} />}
+        <Main {...props}>
+          <div className={classes.root}>
+            <Paper className={classes.paper}>
+              <Box
+                className={classes.dialog}
+                style={props.littleWindow ? {maxHeight: 'inherit'} : {}}
+              >
                 <Box
-                  className={classes.dialog}
-                  style={props.littleWindow ? {maxHeight: 'inherit'} : {}}
+                  display="flex"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  className={classes.dialogHeader}
                 >
+                  <Box>
+                    {!props.littleWindow ? (
+                      <Link to="/dialogs">
+                        <ArrowBackIosIcon />
+                      </Link>
+                    ) : (
+                      <Box onClick={props.onBackClick}>
+                        <ArrowBackIosIcon />
+                      </Box>
+                    )}
+                  </Box>
                   <Box
                     display="flex"
-                    justifyContent="space-between"
-                    alignItems="center"
-                    className={classes.dialogHeader}
+                    justifyContent="center"
+                    flexDirection="columnt"
                   >
-                    <Box>
-                      {!props.littleWindow ? (
-                        <Link to="/dialogs">
-                          <ArrowBackIosIcon />
-                        </Link>
-                      ) : (
-                        <Box onClick={props.onBackClick}>
-                          <ArrowBackIosIcon />
-                        </Box>
-                      )}
-                    </Box>
                     <Box
                       display="flex"
-                      justifyContent="center"
-                      flexDirection="columnt"
+                      alignItems="center"
                     >
-                      <Box
-                        display="flex"
-                        alignItems="center"
-                      >
-                        <Link to={"/profile/" + user.data.username}>
-                          {user.data.firstname} {user.data.lastname}
-                        </Link>
-                        <FiberManualRecordIcon style={{
-                          visibility: (read) ? 'hidden' : 'unset',
-                          color: '#3f51b5',
-                          fontSize: '10px',
-                        }}/>
-                      </Box>
-                    </Box>
-                    <Box>
-                      <UserAvatar 
-                        username={user.data.username}
-                        imageName={user.data.avatar}
-                        imageWidth={40}
-                        showOnlineStatus={online}
-                      />
+                      <Link to={"/profile/" + user.data.username}>
+                        {user.data.firstname} {user.data.lastname}
+                      </Link>
+                      <FiberManualRecordIcon style={{
+                        visibility: (read) ? 'hidden' : 'unset',
+                        color: '#3f51b5',
+                        fontSize: '10px',
+                      }}/>
                     </Box>
                   </Box>
-                  <Box
-                    display="flex"
-                    flexDirection="column"
-                    textAlign="initial"
-                    className={classes.dialogBody}
-                    style={{
-                      height: props.bodyHeight,
-                    }}
-                    id="chat-body"
-                    onScroll={(e) => {
-                      onScroll(e, user.data._id);
-                    }}
-                  >
-                    <Box style={{
-                      width: '100%',
-                      paddingBottom: '5px',
-                    }}>
-                      {dialog.messages && dialog.messages.map((message, index) => {
-                        const refProp = {};
-                        if (dialog.scrollToIndex && index == dialog.scrollToIndex) {
-                          refProp.ref = scrollElem;
-                        } else if (index == dialog.messages.length - 1) {
-                          refProp.ref = scrollElem;
-                        }
-                        
-                        const newMessageDate = new Date(message.createdAt).getTime();
-                        const lastMessageDate = new Date(dialog.messages[index - 1]?.createdAt).getTime();
-                        let flag = false;
-
-                        if (index != 0 && newMessageDate - lastMessageDate < 60000) {
-                          if (message.userId._id) {
-                            flag = message.userId._id == dialog.messages[index - 1].userId ||
-                              message.userId._id == dialog.messages[index - 1].userId._id;
-                          } else {
-                            flag = message.userId == dialog.messages[index - 1].userId ||
-                              message.userId == dialog.messages[index - 1].userId._id;
-                          }
-                        }
-                          
-                        return (
-                          <div
-                            {...refProp}
-                            key={message._id}
-                            id={message._id}
-                          >
-                            <Box className={classes.message}>
-                              <Box>
-                                {(flag) ? (
-                                  <Box ml="56px" mb="8px">{nl2br(message.text)}</Box>
-                                ) : (
-                                  <UserMessage
-                                    authorData={dialogMembers[message.userId._id || message.userId]}
-                                    postData={message}
-                                    content={nl2br(message.text)}
-                                  />
-                                )}
-                              </Box>
-                              <Box width="24px">
-                                {(message.userId._id || message.userId) == props.userData._id && (
-                                  <IconButton
-                                    aria-label="more"
-                                    aria-controls={"message-menu"}
-                                    aria-haspopup="true"
-                                    className="hidden-button"
-                                    style={{
-                                      padding: '0',
-                                      marginTop: (flag) ? '0px' : '16px',
-                                    }}
-                                    onClick={(e) => {handleOpen(e, message)}}
-                                  >
-                                    <MoreVertIcon />
-                                  </IconButton>
-                                )}
-                              </Box>
-                            </Box>
-                          </div>
-                        );
-                      })}
-                      <Menu
-                        id={"message-menu"}
-                        className="das"
-                        anchorEl={anchorEl}
-                        keepMounted
-                        open={openMenu}
-                        onClose={handleClose}
-                        PaperProps={{
-                          style: {
-                            maxHeight: 45 * 4.5,
-                            width: '20ch',
-                          },
-                        }}
-                      >
-                        <MenuItem onClick={(e) => {
-                          handleClose();
-                          deleteMessage(dialog._id, targetMessage._id);
-                        }}>
-                          Delete
-                        </MenuItem>
-                      </Menu>
-                      {!user.data.isFriend && (
-                        <Info text={"Add " + user.data.firstname + " to your friends to write message"} />
-                      )}
-                    </Box>
-                  </Box>
-                  <Box className={classes.dialogFooter}>
-                    <UserInputField
-                      userData={props.userData}
-                      textarea={{
-                        placeholder: "Write a message...",
-                        autoComplete: 'off',
-                        autoFocus: true,
-                        className: classes.messageInput,
-                      }}
-                      fileInput={false}
-                      buttonText="Send"
-                      disabled={!user.data.isFriend}
-                      onPost={(values, resetForm) => {sendMessage(values, resetForm, user.data._id)}}
+                  <Box>
+                    <UserAvatar 
+                      username={user.data.username}
+                      imageName={user.data.avatar}
+                      imageWidth={40}
+                      showOnlineStatus={online}
                     />
                   </Box>
                 </Box>
-              </Paper>
-            </div>
-          </Main>
-          {!props.littleWindow && <Footer {...props} />}
-        </>
-      );
-    } else {
-      return (
-        <>
-          {!props.littleWindow && <Header {...props} />}
-          <Main {...props}>
-            <Info text="User not found ;(" />
-          </Main>
-          {!props.littleWindow && <Footer {...props} />}
-        </>
-      );
-    }
-  } else {
-    return (
-      <>
-        {!props.littleWindow && <Header {...props} />}
-        <Main {...props}>
-          <Info
-            text="Loading..."
-            component={() => <CircularProgress color="inherit" />}
-          />
+                <Box
+                  display="flex"
+                  flexDirection="column"
+                  textAlign="initial"
+                  className={classes.dialogBody}
+                  style={{
+                    height: props.bodyHeight,
+                  }}
+                  id="chat-body"
+                  onScroll={(e) => {
+                    onScroll(e, user.data._id);
+                  }}
+                >
+                  <Box style={{
+                    width: '100%',
+                    paddingBottom: '5px',
+                  }}>
+                    {dialog.messages && dialog.messages.map((message, index) => {
+                      const refProp = {};
+                      if (dialog.scrollToIndex && index == dialog.scrollToIndex) {
+                        refProp.ref = scrollElem;
+                      } else if (index == dialog.messages.length - 1) {
+                        refProp.ref = scrollElem;
+                      }
+                      
+                      const newMessageDate = new Date(message.createdAt).getTime();
+                      const lastMessageDate = new Date(dialog.messages[index - 1]?.createdAt).getTime();
+                      let flag = false;
+
+                      if (index != 0 && newMessageDate - lastMessageDate < 60000) {
+                        if (message.userId._id) {
+                          flag = message.userId._id == dialog.messages[index - 1].userId ||
+                            message.userId._id == dialog.messages[index - 1].userId._id;
+                        } else {
+                          flag = message.userId == dialog.messages[index - 1].userId ||
+                            message.userId == dialog.messages[index - 1].userId._id;
+                        }
+                      }
+                        
+                      return (
+                        <div
+                          {...refProp}
+                          key={message._id}
+                          id={message._id}
+                        >
+                          <Box className={classes.message}>
+                            <Box>
+                              {(flag) ? (
+                                <Box ml="56px" mb="8px">{nl2br(message.text)}</Box>
+                              ) : (
+                                <UserMessage
+                                  authorData={dialogMembers[message.userId._id || message.userId]}
+                                  postData={message}
+                                  content={nl2br(message.text)}
+                                />
+                              )}
+                            </Box>
+                            <Box width="24px">
+                              {(message.userId._id || message.userId) == props.userData._id && (
+                                <IconButton
+                                  aria-label="more"
+                                  aria-controls={"message-menu"}
+                                  aria-haspopup="true"
+                                  className="hidden-button"
+                                  style={{
+                                    padding: '0',
+                                    marginTop: (flag) ? '0px' : '16px',
+                                  }}
+                                  onClick={(e) => {handleOpen(e, message)}}
+                                >
+                                  <MoreVertIcon />
+                                </IconButton>
+                              )}
+                            </Box>
+                          </Box>
+                        </div>
+                      );
+                    })}
+                    <Menu
+                      id={"message-menu"}
+                      className="das"
+                      anchorEl={anchorEl}
+                      keepMounted
+                      open={openMenu}
+                      onClose={handleClose}
+                      PaperProps={{
+                        style: {
+                          maxHeight: 45 * 4.5,
+                          width: '20ch',
+                        },
+                      }}
+                    >
+                      <MenuItem onClick={(e) => {
+                        handleClose();
+                        deleteMessage(dialog._id, targetMessage._id);
+                      }}>
+                        Delete
+                      </MenuItem>
+                    </Menu>
+                    {!user.data.isFriend && (
+                      <Info text={"Add " + user.data.firstname + " to your friends to write message"} />
+                    )}
+                  </Box>
+                </Box>
+                <Box className={classes.dialogFooter}>
+                  <UserInputField
+                    userData={props.userData}
+                    textarea={{
+                      placeholder: "Write a message...",
+                      autoComplete: 'off',
+                      autoFocus: true,
+                      className: classes.messageInput,
+                    }}
+                    fileInput={false}
+                    buttonText="Send"
+                    disabled={!user.data.isFriend}
+                    onPost={(values, resetForm) => {sendMessage(values, resetForm, user.data._id)}}
+                  />
+                </Box>
+              </Box>
+            </Paper>
+          </div>
         </Main>
         {!props.littleWindow && <Footer {...props} />}
-      </>
-    );
+      </>);
+    } else {
+      return (<>
+        {!props.littleWindow && <Header {...props} />}
+        <Main {...props}>
+          <Info text="User not found ;(" />
+        </Main>
+        {!props.littleWindow && <Footer {...props} />}
+      </>);
+    }
+  } else {
+    return (<>
+      {!props.littleWindow && <Header {...props} />}
+      <Main {...props}>
+        <Info
+          text="Loading..."
+          component={() => <CircularProgress color="inherit" />}
+        />
+      </Main>
+      {!props.littleWindow && <Footer {...props} />}
+    </>);
   }
 }
 
