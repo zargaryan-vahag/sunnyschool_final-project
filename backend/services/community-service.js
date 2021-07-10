@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 
 const Community = require('../models/community');
 const UserService = require('../services/user-service');
+const PostService = require('../services/post-service');
 const AppError = require('../managers/app-error');
 
 class CommunityService {
@@ -122,6 +123,27 @@ class CommunityService {
     if (community.avatar != "default_community_image.png") {
       await fs.promises.unlink(__homedir + '/public/uploads/' + community.avatar);
     }
+  }
+  
+  static async deleteCommunity(communityId) {
+    const community = await Community.findById(communityId).select("+posts +followers").lean();
+    if (!community) {
+      throw AppError.notFound('Community not found');
+    }
+
+    const promises = [];
+    promises.push(Community.deleteOne({ _id: community._id }));
+    if (community.avatar != "default_community_image.png") {
+      promises.push(fs.promises.unlink(__homedir + '/public/uploads/' + community.avatar));
+    }
+    for (const userId of community.followers) {
+      promises.push(UserService.unfollowCommunity(userId, community._id));
+    }
+    for (const postId of community.posts) {
+      promises.push(PostService.deletePost(postId));
+    }
+    
+    await Promise.all(promises);
   }
 }
 

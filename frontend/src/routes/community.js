@@ -6,10 +6,12 @@ import Box from '@material-ui/core/Box';
 import Grid from '@material-ui/core/Grid';
 import Paper from '@material-ui/core/Paper';
 import CircularProgress from '@material-ui/core/CircularProgress';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Button from '@material-ui/core/Button';
 
 import {
   getCommunity,
+  delCommunity,
   toggleFollowCommunity,
   delCommunityAvatar,
   updateCommunityAvatar,
@@ -29,6 +31,7 @@ import AlertDialog from '../components/alert-dialog';
 import Info from '../components/info.js';
 import UserInputField from '../components/user-input-field';
 import ImageForm from '../components/image-input-form';
+import MenuList from '../components/menu-list';
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -181,6 +184,39 @@ export default function Communities(props) {
     userData: props.userData,
     onDelete: deletePost,
   }), [posts]);
+  
+  const memoizedList = useMemo(() => ([
+    {
+      name: 'delcom',
+      title: 'Delete community'
+    }
+  ]), []);
+
+  const MMenuButton = useMemo(() => {
+    return (
+      <Button
+        variant="contained"
+        className={classes.profileButtons}
+      >
+        <ExpandMoreIcon /> <Box> More</Box>
+      </Button>
+    );
+  }, []);
+  const MMenuList = useMemo(() => {
+    return (
+      <MenuList
+        list={memoizedList}
+        onItemSelect={async (item) => {
+          if (item == 'delcom') {
+            const result = await delCommunity(community.data._id);
+            location.href = '/communities/' + props.userData._id;
+          }
+        }}
+      >
+        {MMenuButton}
+      </MenuList>
+    );
+  }, [community]);
 
   paginator(async (setEnd) => {
     posts.page++;
@@ -324,6 +360,11 @@ export default function Communities(props) {
                             </Button>
                           )}
                         </Box>
+                        {community.data.creatorId == props.userData._id ? (
+                          <Box mt={1}>
+                            {MMenuList}
+                          </Box>
+                        ) : null}
                       </Paper>
                     </Box>
                   </Grid>

@@ -21,6 +21,13 @@ router.post('/',
   CommunityController.createCommunity
 );
 
+router.delete('/',
+  isLoggedIn(),
+  body('communityId').exists().isMongoId(),
+  validationResult,
+  CommunityController.deleteCommunity
+);
+
 router.get('/:commId',
   isLoggedIn(),
   param('commId').exists().isMongoId(),

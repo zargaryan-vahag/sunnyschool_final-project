@@ -201,6 +201,15 @@ class CommunityController {
       next(e);
     }
   }
+
+  static async deleteCommunity(req, res, next) {
+    try {
+      await CommunityService.deleteCommunity(req.body.communityId);
+      res.onSuccess({ deleted: true }, 'deleted');
+    } catch (e) {
+      next(e);
+    }
+  }
 }
 
 module.exports = CommunityController;

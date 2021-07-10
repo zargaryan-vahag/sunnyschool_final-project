@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import Box from '@material-ui/core/Box';
+import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
 import CircularProgress from '@material-ui/core/CircularProgress';
@@ -8,6 +9,7 @@ import IconButton from '@material-ui/core/IconButton';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import MoreHorizIcon from '@material-ui/icons/MoreHoriz'; 
+import AddIcon from '@material-ui/icons/Add';
 
 import { getCommunities, toggleFollowCommunity } from '../api/community';
 import Header from '../modules/header';
@@ -17,6 +19,8 @@ import paginator from '../managers/paginator';
 import Info from '../components/info.js';
 import Link from '../components/link';
 import Avatar from '../components/user-avatar';
+import AlertDialog from '../components/alert-dialog';
+import CreateCommunityForm from '../components/create-community-form';
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -74,6 +78,7 @@ function CommunityActions({ community, onToggleFollow }) {
 
 export default function Communities(props) {
   const classes = useStyles();
+  const [open, setOpen] = useState(false);
   const [communities, setCommunities] = useState({
     success: false,
     page: 1,
@@ -105,6 +110,10 @@ export default function Communities(props) {
     }
   }
 
+  function openForm(e) {
+    setOpen(true);
+  }
+
   useEffect(async () => {
     const comms = await getCommunities({
       userId: props.match.params.userId,
@@ -122,10 +131,27 @@ export default function Communities(props) {
   if (communities.success) {
     return (
       <>
+        <AlertDialog
+          open={open}
+          component={<CreateCommunityForm />}
+          onClose={() => {setOpen(false)}}
+        />
         <Header {...props} />
         <Main {...props}>
           <Box>
             <Paper className={classes.paper}>
+              <Box
+                borderBottom="dashed"
+                paddingBottom="16px"
+              >
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={openForm}
+                >
+                  <AddIcon /> Create
+                </Button>
+              </Box>
               {communities.data.length == 0 && (
                 <Info text="Communities list is empty ;("/>
               )}

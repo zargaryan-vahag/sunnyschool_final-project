@@ -1,3 +1,5 @@
+export { default as createCommunity } from './create-community';
+export { default as delCommunity } from './del-community';
 export { default as getCommunities } from './get-communities';
 export { default as toggleFollowCommunity } from './toggle-follow-community';
 export { default as getCommunity } from './get-community';

@@ -13,6 +13,7 @@ import FiberManualRecordIcon from '@material-ui/icons/FiberManualRecord';
 
 import { getDialogs } from '../api/user';
 import { SocketContext } from '../context/socket';
+import Info from '../components/info.js';
 import UserAvatar from '../components/user-avatar';
 
 const useStyles = makeStyles((theme) => ({
@@ -23,7 +24,7 @@ const useStyles = makeStyles((theme) => ({
     maxHeight: '100%',
   },
   paper: {
-    // padding: theme.spacing(2),
+    padding: theme.spacing(2),
   },
   dialogBox: {
     borderBottom: 'solid 1px #D2D3D5',
@@ -94,6 +95,9 @@ export default function Dialogs(props) {
       <Main {...props}>
         <div className={classes.root}>
           <Paper className={classes.paper}>
+            {dialogs && dialogs.length == 0 && (
+              <Info text="Not found dialogs ;("/>
+            )}
             {dialogs && dialogs.map((dialog) => {
               return (
                 <Box
