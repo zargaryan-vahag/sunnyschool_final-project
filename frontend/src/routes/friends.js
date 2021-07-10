@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { useBottomScrollListener } from 'react-bottom-scroll-listener';
 import StickyBox from "react-sticky-box";
 import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
@@ -12,6 +11,7 @@ import { getFriends } from '../api/friend';
 import Header from '../modules/header';
 import Main from '../modules/main';
 import Footer from '../modules/footer';
+import paginator from '../managers/paginator';
 import Info from '../components/info.js';
 import Link from '../components/link';
 import UserAvatar from '../components/user-avatar';
@@ -41,11 +41,8 @@ export default function Friends(props) {
     page: 1,
     data: []
   });
-  const [end, setEnd] = useState(false);
 
-  useBottomScrollListener(async () => {
-    if (end) return;
-
+  paginator(async (setEnd) => {
     if (user && user.success) {
       friends.page++;
       const newFriends = await getFriends({
@@ -59,9 +56,7 @@ export default function Friends(props) {
         page: friends.page
       });
 
-      if (newFriends.data.length == 0) {
-        setEnd(true);
-      }
+      setEnd(newFriends.data.length == 0)
     }
   });
 
@@ -92,126 +87,120 @@ export default function Friends(props) {
   
   if (user) {
     if (user.success) {
-      return (
-        <>
-          <Header {...props} />
-          <Main {...props}>
-            <Grid container spacing={1}>
-              <Grid item xs={9}>
-                {friends.success && friends.data.length == 0 ? (
-                  <Info text="Friends list is empty ;("/>
-                ) : (
-                  <Paper className={classes.paper}>
-                    {friends.success && friends.data.map((friend) => {
-                      return (
-                        <Box
-                          key={friend._id}
-                          display="flex"
-                          style={{
-                            borderBottom: 'solid 1px darkgrey',
-                            paddingBottom: '10px',
-                            marginTop: '20px',
-                          }}
-                        >
-                          <Box mr={1}>
-                            <UserAvatar
-                              username={friend.username}
-                              imageName={friend.avatar}
-                              imageWidth={100}
-                            />
-                          </Box>
-                          <Grid
-                            container
-                            direction="column"
-                            justify="space-around"
-                            alignItems="flex-start"
-                          >
-                            <Box
-                              display="flex"
-                              justifyContent="space-between"
-                              width="100%"
-                            >
-                              <Box>
-                                <Link to={'/profile/' + friend.username}>
-                                  {friend.firstname} {friend.lastname}
-                                </Link>
-                              </Box>
-                              <Box>
-
-                              </Box>
-                            </Box>
-                            <Box>
-                              {friend.hometown}
-                            </Box>
-                            <Box>
-                              <Link to={'/dialog/' + friend._id}>Write message</Link>
-                            </Box>
-                          </Grid>
-                        </Box>
-                      );
-                    })}
-                  </Paper>
-                )}
-              </Grid>
-              <Grid item xs={3}>
-                <StickyBox offsetTop={80} offsetBottom={20}>
-                  <Paper>
-                    <Box
-                      className={classes.tabsRoot}
-                      display="flex"
-                      alignItems="center"
-                    >
-                      <Box mr={1}>
-                        <UserAvatar
-                          username={user.data.username}
-                          imageName={user.data.avatar}
-                          imageWidth={30}
-                        />
-                      </Box>
-                      <Box>
-                        <Box display="flex" justifyContent="flex-start">
-                          <Link to={'/profile/' + user.data.username}>
-                            {user.data.firstname + " " + user.data.lastname}
-                          </Link>
-                        </Box>
-                        <Box>
-                          <Link to={'/profile/' + user.data.username}>
-                            Back to profile
-                          </Link>
-                        </Box>
-                      </Box>
-                    </Box>
-                  </Paper>
-                </StickyBox>
-              </Grid>
-            </Grid>
-          </Main>
-          <Footer />
-        </>
-      );
-    } else {
-      return (
-        <>
-          <Header {...props} />
-          <Main {...props}>
-            <Info text="User not found ;(" />
-          </Main>
-          <Footer />
-        </>
-      );
-    }
-  } else {
-    return (
-      <>
+      return (<>
         <Header {...props} />
         <Main {...props}>
-          <Info
-            text="Loading..."
-            component={() => <CircularProgress color="inherit" />}
-          />
+          <Grid container spacing={1}>
+            <Grid item xs={9}>
+              {friends.success && friends.data.length == 0 ? (
+                <Info text="Friends list is empty ;("/>
+              ) : (
+                <Paper className={classes.paper}>
+                  {friends.success && friends.data.map((friend) => {
+                    return (
+                      <Box
+                        key={friend._id}
+                        display="flex"
+                        style={{
+                          borderBottom: 'solid 1px darkgrey',
+                          paddingBottom: '10px',
+                          marginTop: '20px',
+                        }}
+                      >
+                        <Box mr={1}>
+                          <UserAvatar
+                            username={friend.username}
+                            imageName={friend.avatar}
+                            imageWidth={100}
+                          />
+                        </Box>
+                        <Grid
+                          container
+                          direction="column"
+                          justify="space-around"
+                          alignItems="flex-start"
+                        >
+                          <Box
+                            display="flex"
+                            justifyContent="space-between"
+                            width="100%"
+                          >
+                            <Box>
+                              <Link to={'/profile/' + friend.username}>
+                                {friend.firstname} {friend.lastname}
+                              </Link>
+                            </Box>
+                            <Box>
+
+                            </Box>
+                          </Box>
+                          <Box>
+                            {friend.hometown}
+                          </Box>
+                          <Box>
+                            <Link to={'/dialog/' + friend._id}>Write message</Link>
+                          </Box>
+                        </Grid>
+                      </Box>
+                    );
+                  })}
+                </Paper>
+              )}
+            </Grid>
+            <Grid item xs={3}>
+              <StickyBox offsetTop={80} offsetBottom={20}>
+                <Paper>
+                  <Box
+                    className={classes.tabsRoot}
+                    display="flex"
+                    alignItems="center"
+                  >
+                    <Box mr={1}>
+                      <UserAvatar
+                        username={user.data.username}
+                        imageName={user.data.avatar}
+                        imageWidth={30}
+                      />
+                    </Box>
+                    <Box>
+                      <Box display="flex" justifyContent="flex-start">
+                        <Link to={'/profile/' + user.data.username}>
+                          {user.data.firstname + " " + user.data.lastname}
+                        </Link>
+                      </Box>
+                      <Box>
+                        <Link to={'/profile/' + user.data.username}>
+                          Back to profile
+                        </Link>
+                      </Box>
+                    </Box>
+                  </Box>
+                </Paper>
+              </StickyBox>
+            </Grid>
+          </Grid>
         </Main>
         <Footer />
-      </>
-    );
+      </>);
+    } else {
+      return (<>
+        <Header {...props} />
+        <Main {...props}>
+          <Info text="User not found ;(" />
+        </Main>
+        <Footer />
+      </>);
+    }
+  } else {
+    return (<>
+      <Header {...props} />
+      <Main {...props}>
+        <Info
+          text="Loading..."
+          component={() => <CircularProgress color="inherit" />}
+        />
+      </Main>
+      <Footer />
+    </>);
   }
 }
