@@ -7,11 +7,13 @@ import Box from '@material-ui/core/Box';
 import Grid from '@material-ui/core/Grid';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
+import CircularProgress from '@material-ui/core/CircularProgress';
 
 import { getPosts } from '../api/post';
 import Header from '../modules/header';
 import Main from '../modules/main';
 import Footer from '../modules/footer';
+import Info from '../components/info.js';
 import Post from '../components/post';
 
 const useStyles = makeStyles((theme) => ({
@@ -59,6 +61,7 @@ export default function News(props) {
       }
       
       setNews({
+        success: true,
         page: 1,
         data: newPosts.data,
       });
@@ -69,6 +72,7 @@ export default function News(props) {
   const classes = useStyles();
   const [tabValue, setTabValue] = useState(0);
   const [news, setNews] = useState({
+    success: false,
     page: 1,
     data: []
   });
@@ -93,6 +97,7 @@ export default function News(props) {
     }
 
     setNews({
+      success: true,
       page: news.page,
       data: [...news.data, ...newPosts.data],
     });
@@ -108,18 +113,26 @@ export default function News(props) {
       page: 1,
     });
     const news = {};
+    news.success = true;
     news.page = 1;
     news.data = res.data;
     setNews(news);
   }, []);
 
-  return (
-    <>
+  if (news.success) {
+    return (<>
       <Header {...props} />
       <Main {...props}>
         <Grid container spacing={1} style={{width: '100%'}}>
           <Grid item xs={10}>
             <Box component="div" m={1}>
+              {news.data.length == 0 && (<>
+                <Header {...props} />
+                <Main {...props}>
+                  <Info text="Posts not found ;(" />
+                </Main>
+                <Footer />
+              </>)}
               {news.data.map((post) => {
                 return (
                   <Paper
@@ -161,6 +174,17 @@ export default function News(props) {
         </Grid>
       </Main>
       <Footer />
-    </>
-  );
+    </>);
+  } else {
+    return (<>
+      <Header {...props} />
+      <Main {...props}>
+        <Info
+          text="Loading..."
+          component={() => <CircularProgress color="inherit" />}
+        />
+      </Main>
+      <Footer />
+    </>);
+  }
 }

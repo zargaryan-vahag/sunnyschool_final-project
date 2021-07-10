@@ -257,137 +257,133 @@ export default function Communities(props) {
   }, [props.match.params.communityId]);
 
   if (community.success) {
-    return (
-      <>
-        <AlertDialog
-          open={open}
-          dialogTitle={title}
-          dialogText={text}
-          component={component}
-          onClose={() => {
-            setOpen(false);
-          }}
-        />
-        <Header {...props} />
-        <Main {...props}>
-          <Box>
-            <Grid container spacing={1}>
-              <Grid item xs={9}>
+    return (<>
+      <AlertDialog
+        open={open}
+        dialogTitle={title}
+        dialogText={text}
+        component={component}
+        onClose={() => {
+          setOpen(false);
+        }}
+      />
+      <Header {...props} />
+      <Main {...props}>
+        <Box>
+          <Grid container spacing={1}>
+            <Grid item xs={9}>
+              <Grid item xs={12}>
+                <Box m={1}>
+                  <Paper className={classes.paper}>
+                    <Box
+                      m={1}
+                      display="flex"
+                      justifyContent="space-between"
+                    >
+                      <Box fontSize={25}>{community.data.name}</Box>
+                    </Box>
+                    <hr />
+                    <Box>{community.data.status}</Box>
+                  </Paper>
+                </Box>
+              </Grid>
+              <Grid item xs={12}>
+                {community.data.creatorId == props.userData._id ? (
+                  <Box m={1}>
+                    <Paper className={classes.paper}>
+                      <UserInputField
+                        userData={props.userData}
+                        textarea={{
+                          placeholder: "What's new?",
+                        }}
+                        onPost={postHandler}
+                      />
+                    </Paper>
+                  </Box>
+                ) : null}
+                <Box m={1}>
+                  <PostList memoValues={memoValues} />
+                </Box>
+              </Grid>
+            </Grid>
+            <Grid item xs={3}>
+              <StickyBox offsetTop={100} offsetBottom={20}>
                 <Grid item xs={12}>
                   <Box m={1}>
                     <Paper className={classes.paper}>
-                      <Box
-                        m={1}
-                        display="flex"
-                        justifyContent="space-between"
-                      >
-                        <Box fontSize={25}>{community.data.name}</Box>
+                      <Box>
+                        <FbImageLibrary
+                          className={classes.profile_image}
+                          hideOverlay={community.data.creatorId != props.userData._id}
+                          renderOverlay={(community.data.creatorId == props.userData._id) ? () => {
+                            return (
+                              <>
+                                <Button
+                                  onClick={(e) => {updateAvatarModal(e, {action: "update"})}}
+                                  className={classes.avatarButton}
+                                >
+                                  Update avatar
+                                </Button>
+                                <Button
+                                  onClick={(e) => {updateAvatarModal(e, {action: "delete"})}}
+                                  className={classes.avatarButton}
+                                >
+                                  Delete
+                                </Button>
+                              </>
+                            );
+                          } : () => {}}
+                          images={[apiURL() + "/uploads/" + community.data.avatar]}
+                        />
                       </Box>
-                      <hr />
-                      <Box>{community.data.status}</Box>
+                      <Box>
+                        {isFollower ? (
+                          <Button
+                            variant="contained"
+                            className={classes.profileButtons}
+                            onClick={() => {toggleFollow(community.data._id)}}
+                          >
+                            Unfollow
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="contained"
+                            className={classes.profileButtons}
+                            onClick={() => {toggleFollow(community.data._id)}}
+                            style={{
+                              backgroundColor: '#5181B8',
+                              color: 'white',
+                            }}
+                          >
+                            Follow
+                          </Button>
+                        )}
+                      </Box>
+                      {community.data.creatorId == props.userData._id ? (
+                        <Box mt={1}>
+                          {MMenuList}
+                        </Box>
+                      ) : null}
                     </Paper>
                   </Box>
                 </Grid>
-                <Grid item xs={12}>
-                  {community.data.creatorId == props.userData._id ? (
-                    <Box m={1}>
-                      <Paper className={classes.paper}>
-                        <UserInputField
-                          userData={props.userData}
-                          textarea={{
-                            placeholder: "What's new?",
-                          }}
-                          onPost={postHandler}
-                        />
-                      </Paper>
-                    </Box>
-                  ) : null}
-                  <Box m={1}>
-                    <PostList memoValues={memoValues} />
-                  </Box>
-                </Grid>
-              </Grid>
-              <Grid item xs={3}>
-                <StickyBox offsetTop={100} offsetBottom={20}>
-                  <Grid item xs={12}>
-                    <Box m={1}>
-                      <Paper className={classes.paper}>
-                        <Box>
-                          <FbImageLibrary
-                            className={classes.profile_image}
-                            hideOverlay={community.data.creatorId != props.userData._id}
-                            renderOverlay={(community.data.creatorId == props.userData._id) ? () => {
-                              return (
-                                <>
-                                  <Button
-                                    onClick={(e) => {updateAvatarModal(e, {action: "update"})}}
-                                    className={classes.avatarButton}
-                                  >
-                                    Update avatar
-                                  </Button>
-                                  <Button
-                                    onClick={(e) => {updateAvatarModal(e, {action: "delete"})}}
-                                    className={classes.avatarButton}
-                                  >
-                                    Delete
-                                  </Button>
-                                </>
-                              );
-                            } : () => {}}
-                            images={[apiURL() + "/uploads/" + community.data.avatar]}
-                          />
-                        </Box>
-                        <Box>
-                          {isFollower ? (
-                            <Button
-                              variant="contained"
-                              className={classes.profileButtons}
-                              onClick={() => {toggleFollow(community.data._id)}}
-                            >
-                              Unfollow
-                            </Button>
-                          ) : (
-                            <Button
-                              variant="contained"
-                              className={classes.profileButtons}
-                              onClick={() => {toggleFollow(community.data._id)}}
-                              style={{
-                                backgroundColor: '#5181B8',
-                                color: 'white',
-                              }}
-                            >
-                              Follow
-                            </Button>
-                          )}
-                        </Box>
-                        {community.data.creatorId == props.userData._id ? (
-                          <Box mt={1}>
-                            {MMenuList}
-                          </Box>
-                        ) : null}
-                      </Paper>
-                    </Box>
-                  </Grid>
-                </StickyBox>
-              </Grid>
+              </StickyBox>
             </Grid>
-          </Box>
-        </Main>
-        <Footer />
-      </>
-    );
+          </Grid>
+        </Box>
+      </Main>
+      <Footer />
+    </>);
   } else {
-    return (
-      <>
-        <Header {...props} />
-        <Main {...props}>
-          <Info
-            text="Loading..."
-            component={() => <CircularProgress color="inherit" />}
-          />
-        </Main>
-        <Footer />
-      </>
-    );
+    return (<>
+      <Header {...props} />
+      <Main {...props}>
+        <Info
+          text="Loading..."
+          component={() => <CircularProgress color="inherit" />}
+        />
+      </Main>
+      <Footer />
+    </>);
   }
 }

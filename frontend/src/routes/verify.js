@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import MuiAlert from '@material-ui/lab/Alert';
-// import Link from '@material-ui/core/Link';
 import Link from '../components/link';
 
 import { verify as verifyAccount } from '../api/auth';

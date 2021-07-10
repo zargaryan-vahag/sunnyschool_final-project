@@ -129,99 +129,95 @@ export default function Communities(props) {
   }, [props.match.params.userId]);
 
   if (communities.success) {
-    return (
-      <>
-        <AlertDialog
-          open={open}
-          component={<CreateCommunityForm />}
-          onClose={() => {setOpen(false)}}
-        />
-        <Header {...props} />
-        <Main {...props}>
-          <Box>
-            <Paper className={classes.paper}>
-              <Box
-                borderBottom="dashed"
-                paddingBottom="16px"
+    return (<>
+      <AlertDialog
+        open={open}
+        component={<CreateCommunityForm />}
+        onClose={() => {setOpen(false)}}
+      />
+      <Header {...props} />
+      <Main {...props}>
+        <Box>
+          <Paper className={classes.paper}>
+            <Box
+              borderBottom="dashed"
+              paddingBottom="16px"
+            >
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={openForm}
               >
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={openForm}
+                <AddIcon /> Create
+              </Button>
+            </Box>
+            {communities.data.length == 0 && (
+              <Info text="Communities list is empty ;("/>
+            )}
+            {communities.data.map((community) => {
+              return (
+                <Box
+                  key={community._id}
+                  display="flex"
+                  style={{
+                    borderBottom: 'solid 1px darkgrey',
+                    paddingBottom: '10px',
+                    marginTop: '20px',
+                  }}
                 >
-                  <AddIcon /> Create
-                </Button>
-              </Box>
-              {communities.data.length == 0 && (
-                <Info text="Communities list is empty ;("/>
-              )}
-              {communities.data.map((community) => {
-                return (
+                  <Box mr={2}>
+                    <Avatar
+                      imageName={community.avatar}
+                      imageWidth={100}
+                      linkValue={"/community/" + community._id}
+                    />
+                  </Box>
                   <Box
-                    key={community._id}
                     display="flex"
-                    style={{
-                      borderBottom: 'solid 1px darkgrey',
-                      paddingBottom: '10px',
-                      marginTop: '20px',
-                    }}
+                    flexDirection="column"
+                    justifyContent="center"
+                    width="100%"
                   >
-                    <Box mr={2}>
-                      <Avatar
-                        imageName={community.avatar}
-                        imageWidth={100}
-                        linkValue={"/community/" + community._id}
-                      />
-                    </Box>
                     <Box
                       display="flex"
-                      flexDirection="column"
-                      justifyContent="center"
-                      width="100%"
+                      justifyContent="space-between"
                     >
-                      <Box
-                        display="flex"
-                        justifyContent="space-between"
-                      >
-                        <Box>
-                          <Typography variant="h5" component="h1">
-                            <Link to={"/community/" + community._id}>{community.name}</Link>
-                          </Typography>
-                        </Box>
-                        <Box>
-                          <CommunityActions
-                            community={community}
-                            onToggleFollow={() => {
-                              toggleFollow(community);
-                            }}
-                          />
-                        </Box>
+                      <Box>
+                        <Typography variant="h5" component="h1">
+                          <Link to={"/community/" + community._id}>{community.name}</Link>
+                        </Typography>
                       </Box>
                       <Box>
-                        {community.followersCount + " followers"}
+                        <CommunityActions
+                          community={community}
+                          onToggleFollow={() => {
+                            toggleFollow(community);
+                          }}
+                        />
                       </Box>
                     </Box>
+                    <Box>
+                      {community.followersCount + " followers"}
+                    </Box>
                   </Box>
-                );
-              })}
-            </Paper>
-          </Box>
-        </Main>
-        <Footer />
-      </>
-    );
+                </Box>
+              );
+            })}
+          </Paper>
+        </Box>
+      </Main>
+      <Footer />
+    </>);
   } else {
-    return (
-      <>
-        <Header {...props} />
-        <Main {...props}>
-          <Info
-            text="Loading..."
-            component={() => <CircularProgress color="inherit" />}
-          />
-        </Main>
-        <Footer />
-      </>
-    );
+    return (<>
+      <Header {...props} />
+      <Main {...props}>
+        <Info
+          text="Loading..."
+          component={() => <CircularProgress color="inherit" />}
+        />
+      </Main>
+      <Footer />
+    </>);
   }
 }

@@ -398,243 +398,238 @@ export default function Profile(props) {
 
   if (user.data._id && posts.success && postsCount != null && friendsCount != null) {
     if (user.success) {
-      return (
-        <>
-          <Header {...props} />
-          <Main {...props}>
-            <div className={classes.root}>
-              <AlertDialog
-                open={open}
-                dialogTitle={title}
-                dialogText={text}
-                component={component}
-                onClose={() => {
-                  setOpen(false);
-                }}
-              />
-              <Grid container spacing={1}>
-                <Grid item xs={3}>
-                  <StickyBox offsetTop={100} offsetBottom={20}>
-                    <Grid item xs={12}>
-                      <Box component="div" m={1}>
-                        <Paper className={classes.paper}>
-                          <Box>
-                            <FbImageLibrary
-                              className={classes.profile_image}
-                              hideOverlay={user.data._id != props.userData._id}
-                              renderOverlay={(user.data._id == props.userData._id) ? () => {
-                                return (
-                                  <>
-                                    <Button
-                                      onClick={(e) => {updateAvatarModal(e, {action: "update"})}}
-                                      className={classes.avatarButton}
-                                    >
-                                      Update avatar
-                                    </Button>
-                                    <Button
-                                      onClick={(e) => {updateAvatarModal(e, {action: "delete"})}}
-                                      className={classes.avatarButton}
-                                    >
-                                      Delete
-                                    </Button>
-                                  </>
-                                );
-                              } : () => {}}
-                              images={[
-                                apiURL() + "/uploads/" + user.data.avatar
-                              ]}
-                            />
-                          </Box>
-                          {props.match.params.username == props.userData.username ? (
-                            <Box mt={1}>
-                              <Link to="/edit" className={classes.link}>
-                                <Button variant="contained" className={classes.profileButtons}>
-                                  Edit
-                                </Button>
-                              </Link>
-                            </Box>
-                          ) : (<>
-                            <Box>
-                              <Link to={"/dialog/" + user.data._id}>
-                                <Button
-                                  variant="contained"
-                                  className={classes.profileButtons}
-                                  style={{
-                                    backgroundColor: '#5181B8',
-                                    color: 'white'
-                                  }}
-                                >
-                                  Write message
-                                </Button>
-                              </Link>
-                            </Box>
-                            <Box mt={1}>
-                              {isFriend ? (
-                                <Button
-                                  variant="contained"
-                                  className={classes.profileButtons}
-                                  onClick={() => {unfriend(user.data._id)}}
-                                >
-                                  Unfriend
-                                </Button>
-                              ) : (
-                                <Button
-                                  variant="contained"
-                                  className={classes.profileButtons}
-                                  onClick={() => {friendRequest(user.data._id)}}
-                                  disabled={requestSentFrom == props.userData._id && requestSent}
-                                  style={{
-                                    backgroundColor: 
-                                      (requestSent && requestSentFrom == props.userData._id) 
-                                        ? ''
-                                        : '#5181B8',
-                                    color: 
-                                      (requestSent && requestSentFrom == props.userData._id) 
-                                        ? '' 
-                                        : 'white',
-                                  }}
-                                >
-                                  Add Friend
-                                </Button>
-                              )}
-                              {requestSent && (
-                                <Button
-                                  variant="contained"
-                                  className={classes.profileButtons}
-                                  onClick={() => {refuse(user.data._id)}}
-                                  disabled={!requestSent}
-                                  style={{
-                                    marginTop: '5px'
-                                  }}
-                                >
-                                  Refuse
-                                </Button>
-                              )}
-                            </Box>
-                          </>)}
-                        </Paper>
-                      </Box>
-                    </Grid>
-                    {/* <Grid item xs={12}>
-                      <Box component="div" m={1}>
-                        <Paper className={classes.paper}>Friends</Paper>
-                      </Box>
-                    </Grid>
-                    <Grid item xs={12}>
-                      <Box component="div" m={1}>
-                        <Paper className={classes.paper}>Communities</Paper>
-                      </Box>
-                    </Grid> */}
-                  </StickyBox>
-                </Grid>
-                <Grid item xs={9}>
-                  <Grid item xs={12}>
-                    <Box component="div" m={1}>
-                      <Paper className={classes.paper}>
-                        <Box
-                          m={1}
-                          display="flex"
-                          justifyContent="space-between"
-                        >
-                          <Box fontSize={25}>
-                            {user.data.firstname} {user.data.lastname}
-                          </Box>
-                          <Box>
-                            {(online) ? 'online' : null}
-                          </Box>
-                        </Box>
-                        <hr />
-                        <Box>
-                          {(user.data.info.hometown) ? (
-                            <Box display="flex" justifyContent="space-between" m={1}>
-                              <Box>Hometown</Box>
-                              <Box>{user.data.info.hometown}</Box>
-                            </Box>
-                          ) : null}
-                          {(user.data.info.gender) ? (
-                            <Box display="flex" justifyContent="space-between" m={1}>
-                              <Box>Gender</Box>
-                              <Box>{genderList[user.data.info.gender]}</Box>
-                            </Box>
-                          ) : null}
-                          {(user.data.info.birthday) ? (
-                            <Box display="flex" justifyContent="space-between" m={1}>
-                              <Box>Birthday</Box>
-                              <Box>{birthday(user.data.info.birthday)}</Box>
-                            </Box>
-                          ) : null}
-                        </Box>
-                        <hr />
-                        <Box m={1} display="flex" justifyContent="space-around">
-                          <Box>
-                            <Link to={"/friends/" + user.data._id}>
-                              <Box>{friendsCount.data}</Box>
-                              <Box>friends</Box>
-                            </Link>
-                          </Box>
-                          <Box>
-                            <Box>{postsCount.data}</Box>
-                            <Box>posts</Box>
-                          </Box>
-                          <Box>
-                            <Link to={"/communities/" + user.data._id}>
-                              <Box>{user.data.followingCommunitiesCount}</Box>
-                              <Box>communities</Box>
-                            </Link>
-                          </Box>
-                        </Box>
-                      </Paper>
-                    </Box>
-                  </Grid>
-                  <Grid item xs={12}>
-                    {props.match.params.username == props.userData.username ? (
-                      <Box component="div" m={1}>
-                        <Paper className={classes.paper}>
-                          <UserInputField
-                            userData={user.data}
-                            textarea={{
-                              placeholder: "What's new?",
-                            }}
-                            onPost={postHandler}
-                          />
-                        </Paper>
-                      </Box>
-                    ) : null}
-                    <Box component="div" m={1}>
-                      <PostList memoValues={memoValues} />
-                    </Box>
-                  </Grid>
-                </Grid>
-              </Grid>
-            </div>
-          </Main>
-          <Footer />
-        </>
-      );
-    } else {
-      return (
-        <>
-          <Header {...props} />
-          <Main {...props}>
-            <Info text="User not found ;(" />
-          </Main>
-          <Footer />
-        </>
-      );
-    }
-  } else {
-    return (
-      <>
+      return (<>
+        <AlertDialog
+          open={open}
+          dialogTitle={title}
+          dialogText={text}
+          component={component}
+          onClose={() => {
+            setOpen(false);
+          }}
+        />
         <Header {...props} />
         <Main {...props}>
-          <Info
-            text="Loading..."
-            component={() => <CircularProgress color="inherit" />}
-          />
+          <Grid container spacing={1}>
+            <Grid item xs={3}>
+              <StickyBox offsetTop={100} offsetBottom={20}>
+                <Grid item xs={12}>
+                  <Box component="div" m={1}>
+                    <Paper className={classes.paper}>
+                      <Box>
+                        <FbImageLibrary
+                          className={classes.profile_image}
+                          hideOverlay={user.data._id != props.userData._id}
+                          renderOverlay={(user.data._id == props.userData._id) ? () => {
+                            return (
+                              <>
+                                <Button
+                                  onClick={(e) => {updateAvatarModal(e, {action: "update"})}}
+                                  className={classes.avatarButton}
+                                >
+                                  Update avatar
+                                </Button>
+                                <Button
+                                  onClick={(e) => {updateAvatarModal(e, {action: "delete"})}}
+                                  className={classes.avatarButton}
+                                >
+                                  Delete
+                                </Button>
+                              </>
+                            );
+                          } : () => {}}
+                          images={[
+                            apiURL() + "/uploads/" + user.data.avatar
+                          ]}
+                        />
+                      </Box>
+                      {props.match.params.username == props.userData.username ? (
+                        <Box mt={1}>
+                          <Link to="/edit" className={classes.link}>
+                            <Button variant="contained" className={classes.profileButtons}>
+                              Edit
+                            </Button>
+                          </Link>
+                        </Box>
+                      ) : (<>
+                        <Box>
+                          <Link to={"/dialog/" + user.data._id}>
+                            <Button
+                              variant="contained"
+                              className={classes.profileButtons}
+                              style={{
+                                backgroundColor: '#5181B8',
+                                color: 'white'
+                              }}
+                            >
+                              Write message
+                            </Button>
+                          </Link>
+                        </Box>
+                        <Box mt={1}>
+                          {isFriend ? (
+                            <Button
+                              variant="contained"
+                              className={classes.profileButtons}
+                              onClick={() => {unfriend(user.data._id)}}
+                            >
+                              Unfriend
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="contained"
+                              className={classes.profileButtons}
+                              onClick={() => {friendRequest(user.data._id)}}
+                              disabled={requestSentFrom == props.userData._id && requestSent}
+                              style={{
+                                backgroundColor: 
+                                  (requestSent && requestSentFrom == props.userData._id) 
+                                    ? ''
+                                    : '#5181B8',
+                                color: 
+                                  (requestSent && requestSentFrom == props.userData._id) 
+                                    ? '' 
+                                    : 'white',
+                              }}
+                            >
+                              Add Friend
+                            </Button>
+                          )}
+                          {requestSent && (
+                            <Button
+                              variant="contained"
+                              className={classes.profileButtons}
+                              onClick={() => {refuse(user.data._id)}}
+                              disabled={!requestSent}
+                              style={{
+                                marginTop: '5px'
+                              }}
+                            >
+                              Refuse
+                            </Button>
+                          )}
+                        </Box>
+                      </>)}
+                    </Paper>
+                  </Box>
+                </Grid>
+                {/* <Grid item xs={12}>
+                  <Box component="div" m={1}>
+                    <Paper className={classes.paper}>Friends</Paper>
+                  </Box>
+                </Grid>
+                <Grid item xs={12}>
+                  <Box component="div" m={1}>
+                    <Paper className={classes.paper}>Communities</Paper>
+                  </Box>
+                </Grid> */}
+              </StickyBox>
+            </Grid>
+            <Grid item xs={9}>
+              <Grid item xs={12}>
+                <Box component="div" m={1}>
+                  <Paper className={classes.paper}>
+                    <Box
+                      m={1}
+                      display="flex"
+                      justifyContent="space-between"
+                    >
+                      <Box fontSize={25}>
+                        {user.data.firstname} {user.data.lastname}
+                      </Box>
+                      <Box>
+                        {(online) ? 'online' : null}
+                      </Box>
+                    </Box>
+                    <hr />
+                    <Box>
+                      {(user.data.info.hometown) ? (
+                        <Box display="flex" justifyContent="space-between" m={1}>
+                          <Box>Hometown</Box>
+                          <Box>{user.data.info.hometown}</Box>
+                        </Box>
+                      ) : null}
+                      {(user.data.info.gender) ? (
+                        <Box display="flex" justifyContent="space-between" m={1}>
+                          <Box>Gender</Box>
+                          <Box>{genderList[user.data.info.gender]}</Box>
+                        </Box>
+                      ) : null}
+                      {(user.data.info.birthday) ? (
+                        <Box display="flex" justifyContent="space-between" m={1}>
+                          <Box>Birthday</Box>
+                          <Box>{birthday(user.data.info.birthday)}</Box>
+                        </Box>
+                      ) : null}
+                    </Box>
+                    <hr />
+                    <Box m={1} display="flex" justifyContent="space-around">
+                      <Box>
+                        <Link to={"/friends/" + user.data._id}>
+                          <Box>{friendsCount.data}</Box>
+                          <Box>friends</Box>
+                        </Link>
+                      </Box>
+                      <Box>
+                        <Box>{postsCount.data}</Box>
+                        <Box>posts</Box>
+                      </Box>
+                      <Box>
+                        <Link to={"/communities/" + user.data._id}>
+                          <Box>{user.data.followingCommunitiesCount}</Box>
+                          <Box>communities</Box>
+                        </Link>
+                      </Box>
+                    </Box>
+                  </Paper>
+                </Box>
+              </Grid>
+              <Grid item xs={12}>
+                {props.match.params.username == props.userData.username ? (
+                  <Box component="div" m={1}>
+                    <Paper className={classes.paper}>
+                      <UserInputField
+                        userData={user.data}
+                        textarea={{
+                          placeholder: "What's new?",
+                        }}
+                        onPost={postHandler}
+                      />
+                    </Paper>
+                  </Box>
+                ) : null}
+                <Box component="div" m={1}>
+                  {posts.data.length == 0 && (
+                    <Info text="Posts not found" />
+                  )}
+                  <PostList memoValues={memoValues} />
+                </Box>
+              </Grid>
+            </Grid>
+          </Grid>
         </Main>
         <Footer />
-      </>
-    );
+      </>);
+    } else {
+      return (<>
+        <Header {...props} />
+        <Main {...props}>
+          <Info text="User not found ;(" />
+        </Main>
+        <Footer />
+      </>);
+    }
+  } else {
+    return (<>
+      <Header {...props} />
+      <Main {...props}>
+        <Info
+          text="Loading..."
+          component={() => <CircularProgress color="inherit" />}
+        />
+      </Main>
+      <Footer />
+    </>);
   }
 }
 
