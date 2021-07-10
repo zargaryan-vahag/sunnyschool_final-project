@@ -96,10 +96,10 @@ export default function Dialogs(props) {
       <Main {...props}>
         <div className={classes.root}>
           <Paper className={classes.paper}>
-            {dialogs && dialogs.length == 0 && (
+            {dialogs.length == 0 && (
               <Info text="Not found dialogs ;("/>
             )}
-            {dialogs && dialogs.map((dialog) => {
+            {dialogs.map((dialog) => {
               return (
                 <Box
                   key={dialog._id}
