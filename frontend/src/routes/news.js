@@ -126,13 +126,9 @@ export default function News(props) {
         <Grid container spacing={1} style={{width: '100%'}}>
           <Grid item xs={10}>
             <Box component="div" m={1}>
-              {news.data.length == 0 && (<>
-                <Header {...props} />
-                <Main {...props}>
-                  <Info text="Posts not found ;(" />
-                </Main>
-                <Footer />
-              </>)}
+              {news.data.length == 0 && (
+                <Info text="Posts not found ;(" />
+              )}
               {news.data.map((post) => {
                 return (
                   <Paper
